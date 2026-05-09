@@ -1,10 +1,10 @@
 import streamlit as st
-import time
 from src.crew.fencing_crew import FencingCrew
 from src.utils.config import WINNING_SCORE
 from src.visualization.fencer_svg import render_fencer_arena
 from src.visualization.animator import render_complete_animation
 from src.visualization.history import render_history_panel
+import streamlit.components.v1 as components
 import traceback
 
 st.set_page_config(page_title="UFence - Fencing Exchange Simulator", page_icon="🤺", layout="wide")
@@ -28,6 +28,7 @@ if "crew" not in st.session_state:
     st.session_state.match_started = False
     st.session_state.exchange_results = []
     st.session_state.last_result = None
+    st.session_state.messages = []
 
 if st.session_state.crew is None:
     try:
@@ -55,6 +56,7 @@ if not st.session_state.match_started:
         st.session_state.match_started = True
         st.session_state.exchange_results = []
         st.session_state.last_result = None
+        st.session_state.messages = []
         st.rerun()
 
 else:
@@ -108,10 +110,10 @@ else:
                 result = crew.start_new_match()
                 st.session_state.exchange_results = []
                 st.session_state.last_result = None
+                st.session_state.messages = []
                 st.rerun()
 
         else:
-            st.markdown("---")
             st.markdown("### 🎯 Fencing Arena")
 
             opponent_intent = crew.get_opponent_intent()
@@ -124,70 +126,69 @@ else:
                 last_result=st.session_state.get("last_result")
             )
 
-            st.markdown("---")
-            st.markdown("### ⚔️ Your Action")
+            st.caption(f"🔵 {score['fencer']} — 🔴 {score['opponent']}  |  Exchange {crew.exchange_number}")
 
-            col1, col2 = st.columns([3, 1])
+            if st.session_state.messages:
+                last = st.session_state.messages[-1]
+                with st.chat_message(last["role"]):
+                    st.markdown(last["content"])
 
-            with col1:
-                valid_actions = crew.get_valid_actions()
-                action_labels = {
-                    "direct_attack": "🗡️ Direct Attack",
-                    "compound_attack": "🔱 Compound Attack",
-                    "fleche": "🏃 Fleche (Running)",
-                    "parry_and_riposte": "🛡️ Parry & Riposte",
-                    "counter_attack": "⚡ Counter-Attack",
-                    "remise": "↩️ Remise",
-                    "prise_de_fer": "✋ Prise de Fer"
-                }
+            if prompt := st.chat_input("Describe your fencing move..."):
+                st.session_state.messages.append({"role": "user", "content": prompt})
 
-                action_options = [action_labels[a] for a in valid_actions]
-                selected_action = st.selectbox("Select your action:", action_options, key="action_select")
+                with st.chat_message("user"):
+                    st.markdown(prompt)
 
-                selected_action_key = valid_actions[action_options.index(selected_action)]
+                with st.spinner("Interpreting and executing..."):
+                    try:
+                        action, target = crew.interpret_user_intent(prompt)
+                        result = crew.execute_exchange(action, target)
 
-            with col2:
-                st.markdown("### Target Areas")
-                st.info("🎯 Torso (main)")
+                        fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
+                        opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
+                        referee_call = result.get("referee_call", {})
+                        call = referee_call.get("call", "simultaneous")
+                        reason = referee_call.get("reason", "")
 
-            if st.button("⚔️ Execute Action", type="primary", use_container_width=True):
-                try:
-                    result = crew.execute_exchange(selected_action_key)
+                        action_labels = {
+                            "direct_attack": "Direct Attack", "compound_attack": "Compound Attack",
+                            "fleche": "Fleche", "parry_and_riposte": "Parry & Riposte",
+                            "counter_attack": "Counter-Attack", "remise": "Remise", "prise_de_fer": "Prise de Fer",
+                        }
+                        action_label = action_labels.get(action, action)
+                        opp_label = action_labels.get(opponent_action, opponent_action)
 
-                    fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
-                    opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
-                    call_result = result.get("referee_call", {}).get("call", "simultaneous")
+                        call_icons = {"fencer": "✅", "opponent": "❌", "simultaneous": "🤝"}
+                        call_text = {"fencer": "You scored!", "opponent": "Opponent scored.", "simultaneous": "Simultaneous"}
 
-                    st.markdown("### ⚔️ FENCING...")
-                    animation_html = render_complete_animation(
-                        fencer_action,
-                        opponent_action,
-                        call_result,
-                        result.get("score", {}).get("fencer", 0),
-                        result.get("score", {}).get("opponent", 0)
-                    )
-                    st.markdown(animation_html, unsafe_allow_html=True)
+                        assistant_msg = (
+                            f"**You:** {action_label} → *{target}*\n\n"
+                            f"**Opponent:** {opp_label}\n\n"
+                            f"{call_icons.get(call, '⚔️')} **{call_text.get(call, '')}** — {reason}\n\n"
+                            f"🔵 {result['score']['fencer']} — 🔴 {result['score']['opponent']}"
+                        )
 
-                    time.sleep(1.5)
+                        with st.chat_message("assistant"):
+                            st.markdown(assistant_msg)
+                            with st.expander("🎬 Show animation"):
+                                animation_html = render_complete_animation(
+                                    fencer_action, opponent_action, call,
+                                    result.get("score", {}).get("fencer", 0),
+                                    result.get("score", {}).get("opponent", 0)
+                                )
+                                components.html(animation_html, height=400)
 
-                    st.session_state.exchange_results.append(result)
-                    st.session_state.last_result = result["referee_call"]
+                        st.session_state.messages.append({"role": "assistant", "content": assistant_msg})
+                        st.session_state.exchange_results.append(result)
+                        st.session_state.last_result = referee_call
 
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error executing action: {e}")
-                    with st.expander("Debug details"):
-                        st.code(traceback.format_exc())
+                        if result.get("match_over"):
+                            st.rerun()
 
-            st.markdown("---")
-            st.markdown("### 📊 Quick Stats")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("🔵 You", score["fencer"])
-            with col2:
-                st.metric("🔴 Opponent", score["opponent"])
-            with col3:
-                st.metric("⚔️ Exchanges", crew.exchange_number)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                        with st.expander("Debug"):
+                            st.code(traceback.format_exc())
 
     with tab2:
         render_history_panel(st.session_state.exchange_results)

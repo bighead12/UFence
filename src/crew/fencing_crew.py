@@ -44,13 +44,13 @@ class FencingCrew:
             "distance": self.current_distance
         }
 
-    def execute_exchange(self, fencer_action: str = None) -> dict:
+    def execute_exchange(self, fencer_action: str = None, target: str = "torso") -> dict:
         self.exchange_number += 1
 
         self.opponent.init_exchange()
 
         fencer_action_type = fencer_action if fencer_action else "direct_attack"
-        fencer_action_dict = self.fencer.execute_action(fencer_action_type, "torso")
+        fencer_action_dict = self.fencer.execute_action(fencer_action_type, target)
 
         opponent_action = self.opponent.execute_action(fencer_action_dict)
 
@@ -89,6 +89,46 @@ class FencingCrew:
             "exchange_history": self.referee.exchange_history,
             "match_over": self.referee._is_match_over()
         }
+
+    def interpret_user_intent(self, user_message: str) -> tuple:
+        actions_str = ", ".join(self.fencer.get_valid_actions())
+        targets_str = ", ".join(self.fencer.get_valid_targets())
+
+        prompt = (
+            f"You are a fencing action interpreter. "
+            f"Valid actions: {actions_str}. "
+            f"Valid targets: {targets_str}. "
+            f"Respond with ONLY a JSON object like "
+            f'{{"action": "direct_attack", "target": "torso"}}. '
+            f"User: {user_message}"
+        )
+
+        try:
+            import litellm
+            from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
+            response = litellm.completion(
+                model=f"ollama/{OLLAMA_MODEL}",
+                messages=[{"role": "user", "content": prompt}],
+                api_base=OLLAMA_BASE_URL,
+                max_tokens=50,
+            )
+            content = response.choices[0].message.content.strip()
+            import json
+            result = json.loads(content)
+            action = result.get("action", "direct_attack")
+            target = result.get("target", "torso")
+        except Exception:
+            action = "direct_attack"
+            target = "torso"
+
+        valid_actions = self.fencer.get_valid_actions()
+        valid_targets = self.fencer.get_valid_targets()
+        if action not in valid_actions:
+            action = "direct_attack"
+        if target not in valid_targets:
+            target = "torso"
+
+        return action, target
 
     def get_valid_actions(self) -> list:
         return self.fencer.get_valid_actions()

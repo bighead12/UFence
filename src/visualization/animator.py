@@ -263,6 +263,13 @@ def render_result_animation(call_result: str, your_score: int, opp_score: int) -
 
 
 def render_complete_animation(fencer_action: str, opponent_action: str, call_result: str, your_score: int, opp_score: int) -> str:
+    result_data = {
+        "fencer": ("#10B981", "✅", "YOU SCORED!"),
+        "opponent": ("#EF4444", "❌", "OPPONENT SCORED!"),
+        "simultaneous": ("#FBBF24", "⭕", "SIMULTANEOUS"),
+    }
+    color, emoji, label = result_data.get(call_result, ("#FBBF24", "⭕", "SIMULTANEOUS"))
+
     return f"""
     {CSS_KEYFRAMES}
     <div style="text-align: center; padding: 20px;">
@@ -282,6 +289,9 @@ def render_complete_animation(fencer_action: str, opponent_action: str, call_res
             <div style="color: #aaa; font-size: 14px;">
                 {get_action_animation(fencer_action)['name']} vs {get_action_animation(opponent_action)['name']}
             </div>
+        </div>
+        <div style="background: {color}; padding: 15px 30px; border-radius: 10px; font-size: 24px; font-weight: bold; color: white; animation: pulse-glow 1s ease-in-out infinite;">
+            {emoji} {label} &nbsp; {your_score}–{opp_score}
         </div>
     </div>
     """
