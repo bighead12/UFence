@@ -14,9 +14,12 @@
   ],
   "right_of_way_rules": {
     "priority_attacks": [
-      "attack",
+      "direct-attack",
+      "compound-attack",
       "fleche",
-      "counter-attack"
+      "counter-attack",
+      "remise",
+      "prise-de-fer"
     ],
     "secondary_actions": [
       "parry",

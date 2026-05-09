@@ -1,5 +1,4 @@
 import random
-from typing import Dict, List
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)

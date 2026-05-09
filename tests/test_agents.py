@@ -1,4 +1,3 @@
-import pytest
 from src.agents.fencer import FencerAgent
 from src.agents.opponent import OpponentAgent
 from src.agents.referee import RefereeAgent

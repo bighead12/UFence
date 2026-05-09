@@ -1,5 +1,3 @@
-import json
-from typing import Optional
 from src.utils.config import get_rules
 from src.utils.logging import get_logger
 
@@ -29,14 +27,20 @@ class RefereeAgent:
 
         call = self._determine_winner(fencer_type, opponent_type)
 
-        fencer_hit = call in ["fencer", "both"]
-        opponent_hit = call in ["opponent", "both"]
+        fencer_hit = call == "fencer"
+        opponent_hit = call == "opponent"
+        is_simultaneous = call == "simultaneous"
 
         fencer_valid = self._is_valid_target(fencer_target)
         opponent_valid = self._is_valid_target(opponent_target)
 
-        fencer_score = 1 if fencer_hit and fencer_valid else 0
-        opponent_score = 1 if opponent_hit and opponent_valid else 0
+        # In foil, simultaneous = no one scores
+        if is_simultaneous:
+            fencer_score = 0
+            opponent_score = 0
+        else:
+            fencer_score = 1 if fencer_hit and fencer_valid else 0
+            opponent_score = 1 if opponent_hit and opponent_valid else 0
 
         if fencer_score:
             self.score["fencer"] += fencer_score
@@ -66,23 +70,58 @@ class RefereeAgent:
         logger.info(f"Referee call: {call} - Score: {self.score}")
         return result
 
+    def _normalize_action(self, action: str) -> str:
+        return action.replace("_", "-")
+
     def _determine_winner(self, fencer_type: str, opponent_type: str) -> str:
         priority_actions = self.rules["right_of_way_rules"]["priority_attacks"]
         secondary_actions = self.rules["right_of_way_rules"]["secondary_actions"]
 
-        fencer_priority = priority_actions.index(fencer_type) if fencer_type in priority_actions else 999
-        opponent_priority = priority_actions.index(opponent_type) if opponent_type in priority_actions else 999
+        fencer_type_norm = self._normalize_action(fencer_type)
+        opponent_type_norm = self._normalize_action(opponent_type)
 
-        if fencer_type in priority_actions and opponent_type not in priority_actions:
+        fencer_is_priority = fencer_type_norm in priority_actions
+        opponent_is_priority = opponent_type_norm in priority_actions
+
+        fencer_is_secondary = fencer_type_norm in secondary_actions
+        opponent_is_secondary = opponent_type_norm in secondary_actions
+
+        # Priority action beats everything
+        if fencer_is_priority and not opponent_is_priority:
             return "fencer"
-        elif opponent_type in priority_actions and fencer_type not in priority_actions:
+        if opponent_is_priority and not fencer_is_priority:
             return "opponent"
-        elif fencer_priority < opponent_priority:
+
+        # Secondary beats non-priority non-secondary
+        if fencer_is_secondary and not opponent_is_secondary:
             return "fencer"
-        elif opponent_priority < fencer_priority:
+        if opponent_is_secondary and not fencer_is_secondary:
             return "opponent"
-        else:
-            return "both"
+
+        # Both priority - check action priority order
+        if fencer_is_priority and opponent_is_priority:
+            fencer_idx = priority_actions.index(fencer_type_norm) if fencer_type_norm in priority_actions else 999
+            opponent_idx = priority_actions.index(opponent_type_norm) if opponent_type_norm in priority_actions else 999
+            if fencer_idx < opponent_idx:
+                return "fencer"
+            elif opponent_idx < fencer_idx:
+                return "opponent"
+            else:
+                return "simultaneous"
+
+        # Both secondary - compare indices
+        if fencer_is_secondary and opponent_is_secondary:
+            fencer_idx = secondary_actions.index(fencer_type_norm) if fencer_type_norm in secondary_actions else 999
+            opponent_idx = secondary_actions.index(opponent_type_norm) if opponent_type_norm in secondary_actions else 999
+            if fencer_idx < opponent_idx:
+                return "fencer"
+            elif opponent_idx < fencer_idx:
+                return "opponent"
+            else:
+                return "simultaneous"
+
+        # Non-priority vs non-priority = simultaneous
+        return "simultaneous"
 
     def _is_valid_target(self, target: str) -> bool:
         valid_areas = self.rules["valid_target_areas"]
@@ -92,7 +131,7 @@ class RefereeAgent:
         reasons = {
             "fencer": f"Fencer's {fencer_type} has priority over opponent's {opponent_type}",
             "opponent": f"Opponent's {opponent_type} has priority over fencer's {fencer_type}",
-            "both": f"Simultaneous actions - both fencers score"
+            "simultaneous": "Simultaneous actions - no touch awarded"
         }
         return reasons.get(call, "Unable to determine")
 

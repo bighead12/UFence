@@ -1,4 +1,3 @@
-from typing import List, Dict
 from src.agents.fencer import FencerAgent
 from src.agents.opponent import OpponentAgent
 from src.agents.referee import RefereeAgent
