@@ -128,22 +128,49 @@ def render_fencer_arena(distance: str, opponent_action: dict, score: dict, last_
     visualizer = FencerVisualizer()
     visualizer.set_score(score)
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    distance_map = {"far": "📏 Far", "medium": "↔️ Medium", "close": "🔪 Close"}
+    distance_display = distance_map.get(distance, "Medium")
+
+    action_name = ""
+    if opponent_action:
+        action_name = opponent_action.get("type", "unknown").replace("_", " ").title()
+
+    col1, col2, col3 = st.columns([1, 3, 1])
 
     with col1:
-        st.markdown("### 🔵 You", unsafe_allow_html=True)
+        st.markdown("### 🔵 **YOU**")
         st.markdown(f"**Score: {score['fencer']}**")
 
     with col2:
-        piste_svg = visualizer.render_piste(distance, opponent_action)
-        st.markdown(f'<div style="text-align: center;">{piste_svg}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("### ⚔️ FENCING ARENA")
+            st.markdown(f"**Distance:** {distance_display}")
+            st.markdown(f"**Opponent Action:** {action_name}")
 
-        if last_result:
-            result_svg = visualizer.render_exchange_result(last_result)
-            st.markdown(f'<div style="text-align: center; margin-top: 10px;">{result_svg}</div>', unsafe_allow_html=True)
+            piste_svg = visualizer.render_piste(distance, opponent_action)
+
+            try:
+                st.markdown(
+                    f'<div style="background:#1E3A5F; padding:10px; border-radius:10px; text-align:center;">'
+                    f'{piste_svg}'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            except Exception as e:
+                st.error(f"SVG Error: {e}")
+                st.info("Using fallback display...")
+
+            if last_result:
+                call = last_result.get("call", "simultaneous")
+                if call == "fencer":
+                    st.success("✅ You scored!")
+                elif call == "opponent":
+                    st.error("❌ Opponent scored!")
+                else:
+                    st.warning("⭕ Simultaneous - no score")
 
     with col3:
-        st.markdown("### 🔴 Opponent", unsafe_allow_html=True)
+        st.markdown("### 🔴 **OPPONENT**")
         st.markdown(f"**Score: {score['opponent']}**")
 
     return visualizer
