@@ -1,13 +1,25 @@
 import streamlit as st
 from src.crew.fencing_crew import FencingCrew
 from src.utils.config import WINNING_SCORE
+import traceback
 
 st.set_page_config(page_title="UFence - Fencing Exchange Simulator", page_icon="🤺", layout="wide")
 
 if "crew" not in st.session_state:
-    st.session_state.crew = FencingCrew()
+    try:
+        st.session_state.crew = FencingCrew()
+    except Exception as e:
+        st.error(f"Error initializing crew: {e}")
+        st.session_state.crew = None
     st.session_state.match_started = False
     st.session_state.exchange_results = []
+
+if st.session_state.crew is None:
+    try:
+        st.session_state.crew = FencingCrew()
+    except Exception as e:
+        st.error(f"Error recreating crew: {e}")
+        st.button("Retry", on_click=lambda: st.rerun())
 
 st.title("🤺 UFence - Fencing Exchange Simulator")
 
@@ -31,6 +43,9 @@ if not st.session_state.match_started:
 
 else:
     crew = st.session_state.crew
+    if crew is None:
+        st.error("Crew not initialized. Please refresh the page.")
+        st.button("Refresh", on_click=lambda: st.rerun())
 
     score = crew.referee.score
     col1, col2, col3 = st.columns(3)
@@ -83,6 +98,16 @@ else:
 
     else:
         st.divider()
+        st.markdown("### 🎯 Opponent Intent")
+
+        opponent_intent = crew.get_opponent_intent()
+        action_name = opponent_intent["action"]["type"].replace("_", " ").title()
+        distance = opponent_intent["distance"]
+
+        distance_emoji = {"far": "📏", "medium": "↔️", "close": "🔪"}
+        st.info(f"{distance_emoji.get(distance, '')} **Distance: {distance.title()}** | ⚔️ **Opponent is preparing: {action_name}**")
+
+        st.divider()
         st.markdown("### Your Action")
 
         valid_actions = crew.get_valid_actions()
@@ -97,16 +122,44 @@ else:
         }
 
         action_options = [action_labels[a] for a in valid_actions]
-        selected_action = st.selectbox("Select your action:", action_options)
+        selected_action = st.selectbox("Select your action:", action_options, key="action_select")
 
         selected_action_key = valid_actions[action_options.index(selected_action)]
 
         if st.button("Execute Action", type="primary"):
-            result = crew.execute_exchange(selected_action_key)
-            st.session_state.exchange_results.append(result)
+            try:
+                result = crew.execute_exchange(selected_action_key)
+                st.session_state.exchange_results.append(result)
+                st.success(f"Action executed: {selected_action}")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error executing action: {e}")
+                with st.expander("Debug details"):
+                    st.code(traceback.format_exc())
 
-            st.success(f"Action executed: {selected_action}")
-            st.rerun()
+    st.divider()
+
+    with st.expander("🏅 Get Coach Feedback"):
+        if crew.referee.exchange_history:
+            feedback = crew.coach.analyze_exchange(
+                crew.referee.exchange_history,
+                crew.referee.score
+            )
+            st.info(f"**Summary:** {feedback['summary']}")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**🔧 Technical**")
+                for item in feedback['technical']:
+                    st.markdown(f"- {item}")
+            with col2:
+                st.markdown("**🎯 Tactical**")
+                for item in feedback['tactical']:
+                    st.markdown(f"- {item}")
+            st.markdown("**📈 Strategic**")
+            for item in feedback['strategic']:
+                st.markdown(f"- {item}")
+        else:
+            st.info("Complete some exchanges to get coach feedback!")
 
     st.divider()
     st.markdown("### 📜 Exchange History")

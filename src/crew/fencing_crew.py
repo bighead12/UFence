@@ -1,3 +1,4 @@
+import random
 from src.agents.fencer import FencerAgent
 from src.agents.opponent import OpponentAgent
 from src.agents.referee import RefereeAgent
@@ -15,6 +16,8 @@ class FencingCrew:
         self.referee = RefereeAgent()
         self.coach = CoachAgent()
         self.exchange_number = 0
+        self.current_opponent_action = None
+        self.current_distance = None
 
     def start_new_match(self):
         logger.info("Starting new fencing match")
@@ -23,11 +26,22 @@ class FencingCrew:
         self.referee.reset()
         self.coach.reset()
         self.exchange_number = 0
-
+        self._generate_opponent_intent()
         return {
             "status": "match_started",
             "winning_score": WINNING_SCORE,
             "score": self.referee.score.copy()
+        }
+
+    def _generate_opponent_intent(self):
+        self.opponent.init_exchange()
+        self.current_opponent_action = self.opponent.execute_action()
+        self.current_distance = random.choice(["close", "medium", "far"])
+
+    def get_opponent_intent(self) -> dict:
+        return {
+            "action": self.current_opponent_action,
+            "distance": self.current_distance
         }
 
     def execute_exchange(self, fencer_action: str = None) -> dict:
@@ -57,6 +71,8 @@ class FencingCrew:
             exchange_history = self.referee.exchange_history
             coach_feedback = self.coach.analyze_exchange(exchange_history, result["score"])
             response["coach_feedback"] = coach_feedback
+        else:
+            self._generate_opponent_intent()
 
         return response
 
