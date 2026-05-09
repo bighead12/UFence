@@ -1,0 +1,123 @@
+{
+  "weapon": "foil",
+  "valid_target_areas": [
+    "torso",
+    "back",
+    "shoulders",
+    "groin"
+  ],
+  "invalid_target_areas": [
+    "head",
+    "arms",
+    "legs",
+    "hands"
+  ],
+  "right_of_way_rules": {
+    "priority_attacks": [
+      "attack",
+      "fleche",
+      "counter-attack"
+    ],
+    "secondary_actions": [
+      "parry",
+      "riposte",
+      "counter-parry"
+    ],
+    "simultaneous_hit": {
+      "result": "both_score",
+      "condition": "when both fencers hit within 40ms"
+    }
+  },
+  "infractions": {
+    "technical": {
+      "caution": {
+        "description": "Equipment adjustment, leaving piste without permission",
+        "penalty": "caution",
+        "card_color": "yellow"
+      },
+      "group_1": {
+        "description": "Fleching out of bounds, crossing boundary line",
+        "penalty": "yellow_card",
+        "point_deduction": 0
+      },
+      "group_2": {
+        "description": "Using non-weapon arm, ducking below shoulder",
+        "penalty": "yellow_card",
+        "point_deduction": 0
+      },
+      "group_3": {
+        "description": "Profanity, brutal conduct, disrepect to official",
+        "penalty": "red_card",
+        "point_deduction": 1
+      }
+    }
+  },
+  "actions": {
+    "attacks": {
+      "direct_attack": {
+        "name": "Direct Attack",
+        "description": "Simple thrust to valid target",
+        "priority": "high"
+      },
+      "compound_attack": {
+        "name": "Compound Attack",
+        "description": "Multiple feints followed by final thrust",
+        "priority": "high"
+      },
+      "fleche": {
+        "name": "Fleche",
+        "description": "Running attack, body passes opponent",
+        "priority": "high",
+        "note": "If both fleche, whoever's weapon touches first has priority"
+      }
+    },
+    "defenses": {
+      "parry": {
+        "name": "Parry",
+        "description": "Weapon deflection to block attack",
+        "types": ["simple", "counter", "circular"],
+        "priority": "secondary"
+      },
+      "evasion": {
+        "name": "Evasion",
+        "description": "Body movement to avoid attack",
+        "priority": "secondary"
+      }
+    },
+    "counter_actions": {
+      "riposte": {
+        "name": "Riposte",
+        "description": "Attack after parrying opponent's attack",
+        "types": ["direct", "indirect", "counter-riposte"],
+        "priority": "medium"
+      },
+      "counter_attack": {
+        "name": "Counter-Attack",
+        "description": "Attack into opponent's attack",
+        "priority": "high",
+        "note": "Has priority if executed before opponent's attack lands"
+      }
+    },
+    "advanced": {
+      "remise": {
+        "name": "Remise",
+        "description": "Immediate follow-up after original attack lands",
+        "note": "Priority only if original attack had right of way"
+      },
+      "prise_de_fer": {
+        "name": "Prise de Fer",
+        "description": "Taking opponent's blade",
+        "priority": "medium"
+      }
+    }
+  },
+  "referee_commands": {
+    "halts": ["Halt!", "En garde!", "Allez!", "Ecart!"],
+  },
+  "scoring": {
+    "touch_value": 1,
+    "winning_score": 5,
+    "touch_time_limit_ms": 30000,
+    "simultaneous_limit_ms": 40
+  }
+}
