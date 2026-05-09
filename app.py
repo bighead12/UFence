@@ -1,7 +1,9 @@
 import streamlit as st
+import time
 from src.crew.fencing_crew import FencingCrew
 from src.utils.config import WINNING_SCORE
 from src.visualization.fencer_svg import render_fencer_arena
+from src.visualization.animator import render_complete_animation
 from src.visualization.history import render_history_panel
 import traceback
 
@@ -151,11 +153,26 @@ else:
             if st.button("⚔️ Execute Action", type="primary", use_container_width=True):
                 try:
                     result = crew.execute_exchange(selected_action_key)
+
+                    fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
+                    opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
+                    call_result = result.get("referee_call", {}).get("call", "simultaneous")
+
+                    st.markdown("### ⚔️ FENCING...")
+                    animation_html = render_complete_animation(
+                        fencer_action,
+                        opponent_action,
+                        call_result,
+                        result.get("score", {}).get("fencer", 0),
+                        result.get("score", {}).get("opponent", 0)
+                    )
+                    st.markdown(animation_html, unsafe_allow_html=True)
+
+                    time.sleep(1.5)
+
                     st.session_state.exchange_results.append(result)
                     st.session_state.last_result = result["referee_call"]
 
-                    with st.spinner("⚔️ Fencing..."):
-                        pass
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error executing action: {e}")
