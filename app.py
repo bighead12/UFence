@@ -3,7 +3,7 @@ import time
 from src.crew.fencing_crew import FencingCrew
 from src.utils.config import WINNING_SCORE
 from src.visualization.fencer_svg import render_fencer_arena
-from src.visualization.animator import render_complete_animation, render_result_animation
+from src.visualization.animator import render_complete_animation
 from src.visualization.history import render_history_panel
 import traceback
 
