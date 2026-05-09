@@ -1,14 +1,8 @@
 import streamlit as st
-import random
 from typing import Optional
 
 
 class FencerVisualizer:
-    FENCER_COLOR = "#3B82F6"
-    OPPONENT_COLOR = "#EF4444"
-    PISTE_COLOR = "#1E3A5F"
-    LINE_COLOR = "#FFFFFF"
-
     def __init__(self):
         self.animation_state = "idle"
         self.last_result = None
@@ -21,144 +15,51 @@ class FencerVisualizer:
         self.animation_state = state
         self.last_result = result
 
-    def render_piste(self, distance: str = "medium", opponent_action: dict = None) -> str:
-        distance_map = {"far": 70, "medium": 50, "close": 30}
-
-        fencer_x = 20
-        opponent_x = 100 - distance_map.get(distance, 50)
-        fencer_y = 80
-        opponent_y = 80
-
-        fencer_svg = self._render_stick_fencer(fencer_x, fencer_y, self.FENCER_COLOR, "left")
-        opponent_svg = self._render_stick_fencer(opponent_x, opponent_y, self.OPPONENT_COLOR, "right")
-
-        distance_line = f'<line x1="{fencer_x + 30}" y1="140" x2="{opponent_x - 10}" y2="140" stroke="white" stroke-width="2" stroke-dasharray="5,5"/>'
-        distance_label = f'<text x="50" y="155" fill="white" font-size="12" text-anchor="middle">Distance: {distance.title()}</text>'
-
-        action_icons = ""
-        if opponent_action:
-            action_type = opponent_action.get("type", "unknown").replace("_", " ").title()
-            action_icons = f'''
-            <text x="{opponent_x}" y="40" fill="{self.OPPONENT_COLOR}" font-size="11" text-anchor="middle" font-weight="bold">
-                ⚔️ {action_type}
-            </text>
-            '''
-
-        svg = f'''
-        <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="200" height="180" fill="{self.PISTE_COLOR}"/>
-            <line x1="100" y1="0" x2="100" y2="180" stroke="{self.LINE_COLOR}" stroke-width="2" opacity="0.5"/>
-            <line x1="10" y1="0" x2="10" y2="180" stroke="{self.LINE_COLOR}" stroke-width="3"/>
-            <line x1="190" y1="0" x2="190" y2="180" stroke="{self.LINE_COLOR}" stroke-width="3"/>
-            {distance_line}
-            {distance_label}
-            {fencer_svg}
-            {opponent_svg}
-            {action_icons}
-            <text x="30" y="20" fill="{self.FENCER_COLOR}" font-size="14" font-weight="bold">YOU</text>
-            <text x="170" y="20" fill="{self.OPPONENT_COLOR}" font-size="14" font-weight="bold">OPP</text>
-        </svg>
-        '''
-        return svg
-
-    def _render_stick_fencer(self, x: int, y: int, color: str, facing: str) -> str:
-        direction = 1 if facing == "right" else -1
-
-        body = f'''
-        <circle cx="{x}" cy="{y-50}" r="8" fill="{color}"/>
-        <line x1="{x}" y1="{y-42}" x2="{x}" y2="{y-10}" stroke="{color}" stroke-width="3"/>
-        <line x1="{x}" y1="{y-35}" x2="{x + 15 * direction}" y2="{y-30}" stroke="{color}" stroke-width="2"/>
-        <line x1="{x}" y1="{y-35}" x2="{x - 10 * direction}" y2="{y-20}" stroke="{color}" stroke-width="2"/>
-        <line x1="{x}" y1="{y-10}" x2="{x - 8}" y2="{y+20}" stroke="{color}" stroke-width="3"/>
-        <line x1="{x}" y1="{y-10}" x2="{x + 8}" y2="{y+20}" stroke="{color}" stroke-width="3"/>
-        <line x1="{x + 5 * direction}" y1="{y-30}" x2="{x + 20 * direction}" y2="{y-45}" stroke="{color}" stroke-width="2"/>
-        <line x1="{x + 5 * direction}" y1="{y-30}" x2="{x + 18 * direction}" y2="{y-15}" stroke="{color}" stroke-width="2"/>
-        '''
-        return body
-
-    def render_score(self) -> str:
-        return f'''
-        <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="120" height="40" rx="5" fill="#1F2937"/>
-            <text x="30" y="25" fill="{self.FENCER_COLOR}" font-size="18" font-weight="bold" text-anchor="middle">
-                {self.score["fencer"]}
-            </text>
-            <text x="60" y="25" fill="white" font-size="14" text-anchor="middle">-</text>
-            <text x="90" y="25" fill="{self.OPPONENT_COLOR}" font-size="18" font-weight="bold" text-anchor="middle">
-                {self.score["opponent"]}
-            </text>
-        </svg>
-        '''
-
-    def render_target_zones(self) -> str:
-        zones = ""
-        targets = [
-            ("torso", 50, 60, "#3B82F6"),
-            ("back", 150, 60, "#EF4444"),
-            ("shoulders", 100, 45, "#10B981"),
-        ]
-        for name, x, y, color in targets:
-            zones += f'<circle cx="{x}" cy="{y}" r="8" fill="{color}" opacity="0.3"/><text x="{x}" y="{y+20}" fill="white" font-size="8" text-anchor="middle">{name}</text>'
-        return zones
-
-    def render_exchange_result(self, result: dict) -> str:
-        call = result.get("call", "simultaneous")
-        fencer_score = result.get("fencer_score", 0)
-        opponent_score = result.get("opponent_score", 0)
-
-        if call == "fencer":
-            color = self.FENCER_COLOR
-            text = f"✓ You scored!"
-        elif call == "opponent":
-            color = self.OPPONENT_COLOR
-            text = "✗ Opponent scored!"
-        else:
-            color = "#FBBF24"
-            text = "○ Simultaneous - no score"
-
-        return f'''
-        <svg viewBox="0 0 150 30" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="150" height="30" rx="5" fill="{color}"/>
-            <text x="75" y="20" fill="white" font-size="12" font-weight="bold" text-anchor="middle">{text}</text>
-        </svg>
-        '''
-
 
 def render_fencer_arena(distance: str, opponent_action: dict, score: dict, last_result: dict = None):
-    visualizer = FencerVisualizer()
-    visualizer.set_score(score)
+    distance_symbols = {
+        "far": "━━━━━━━",
+        "medium": "━━━━━",
+        "close": "━━━"
+    }
 
-    distance_map = {"far": "📏 Far", "medium": "↔️ Medium", "close": "🔪 Close"}
-    distance_display = distance_map.get(distance, "Medium")
+    action_icons = {
+        "direct_attack": "🗡️",
+        "compound_attack": "🔱",
+        "fleche": "🏃",
+        "parry_and_riposte": "🛡️",
+        "counter_attack": "⚡",
+        "remise": "↩️",
+        "prise_de_fer": "✋"
+    }
 
-    action_name = ""
+    action_name = "unknown"
     if opponent_action:
-        action_name = opponent_action.get("type", "unknown").replace("_", " ").title()
+        action_name = opponent_action.get("type", "unknown")
+        action_icon = action_icons.get(action_name, "⚔️")
+    else:
+        action_icon = "⚔️"
 
     col1, col2, col3 = st.columns([1, 3, 1])
 
     with col1:
         st.markdown("### 🔵 **YOU**")
-        st.markdown(f"**Score: {score['fencer']}**")
+        st.metric("Score", score['fencer'])
 
     with col2:
         with st.container(border=True):
             st.markdown("### ⚔️ FENCING ARENA")
-            st.markdown(f"**Distance:** {distance_display}")
-            st.markdown(f"**Opponent Action:** {action_name}")
 
-            piste_svg = visualizer.render_piste(distance, opponent_action)
-
-            try:
-                st.markdown(
-                    f'<div style="background:#1E3A5F; padding:10px; border-radius:10px; text-align:center;">'
-                    f'{piste_svg}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-            except Exception as e:
-                st.error(f"SVG Error: {e}")
-                st.info("Using fallback display...")
+            st.markdown(f"""
+            <div style="background:#1a1a2e; padding:20px; border-radius:15px; text-align:center; margin:10px 0;">
+                <div style="font-size:60px; color:#3B82F6; display:inline-block;">🤺</div>
+                <span style="font-size:30px; color:white; margin:0 15px;">{distance_symbols.get(distance, '━━━━━')}</span>
+                <div style="font-size:60px; color:#EF4444; display:inline-block;">🤺</div>
+                <div style="margin-top:15px; font-size:14px; color:#888;">
+                    📏 Distance: {distance.title()} | {action_icon} Opponent: {action_name.replace('_', ' ').title()}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
             if last_result:
                 call = last_result.get("call", "simultaneous")
@@ -171,6 +72,6 @@ def render_fencer_arena(distance: str, opponent_action: dict, score: dict, last_
 
     with col3:
         st.markdown("### 🔴 **OPPONENT**")
-        st.markdown(f"**Score: {score['opponent']}**")
+        st.metric("Score", score['opponent'])
 
-    return visualizer
+    return FencerVisualizer()

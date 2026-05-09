@@ -2,7 +2,6 @@ import streamlit as st
 from src.crew.fencing_crew import FencingCrew
 from src.utils.config import WINNING_SCORE
 from src.visualization.fencer_svg import render_fencer_arena
-from src.visualization.animator import create_action_icon
 from src.visualization.history import render_history_panel
 import traceback
 

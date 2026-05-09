@@ -1,7 +1,5 @@
 import streamlit as st
 import time
-from typing import Optional, Dict
-import random
 
 
 class Animator:

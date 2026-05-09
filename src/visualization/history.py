@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 from typing import List, Dict
 
@@ -93,7 +92,7 @@ class HistoryPanel:
         total = len(self.exchanges)
         your_wins = sum(1 for ex in self.exchanges if ex["you_scored"])
         opp_wins = sum(1 for ex in self.exchanges if ex["opp_scored"])
-        ties = total - your_wins - opp_wins
+        total - your_wins - opp_wins
 
         col1, col2, col3, col4 = st.columns(4)
 
