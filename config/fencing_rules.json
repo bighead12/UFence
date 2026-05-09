@@ -112,7 +112,7 @@
     }
   },
   "referee_commands": {
-    "halts": ["Halt!", "En garde!", "Allez!", "Ecart!"],
+    "halts": ["Halt!", "En garde!", "Allez!", "Ecart!"]
   },
   "scoring": {
     "touch_value": 1,

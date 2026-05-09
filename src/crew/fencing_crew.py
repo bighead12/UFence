@@ -36,12 +36,10 @@ class FencingCrew:
 
         self.opponent.init_exchange()
 
-        opponent_action = self.opponent.execute_action(fencer_action if fencer_action else None)
+        fencer_action_type = fencer_action if fencer_action else "direct_attack"
+        fencer_action_dict = self.fencer.execute_action(fencer_action_type, "torso")
 
-        fencer_action_dict = self.fencer.execute_action(
-            fencer_action if fencer_action else "direct_attack",
-            "torso"
-        ) if not fencer_action else self.fencer.execute_action(fencer_action, "torso")
+        opponent_action = self.opponent.execute_action(fencer_action_dict)
 
         result = self.referee.judge_action(fencer_action_dict, opponent_action)
 

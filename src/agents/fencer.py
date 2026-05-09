@@ -1,6 +1,3 @@
-from crewai import Agent
-from langchain_ollama import ChatOllama
-from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -8,19 +5,6 @@ logger = get_logger(__name__)
 
 class FencerAgent:
     def __init__(self):
-        self.llm = ChatOllama(
-            model=OLLAMA_MODEL,
-            base_url=OLLAMA_BASE_URL
-        )
-        self.agent = Agent(
-            role="Fencing Athlete",
-            goal="Execute effective fencing actions to score touches",
-            backstory="""You are an experienced foil fencer with excellent technique.
-            You understand fencing tactics and can execute attacks, defenses, and counter-actions.
-            Your strength is reading your opponent and choosing the right action at the right moment.""",
-            verbose=True,
-            llm=self.llm
-        )
         self.action_history = []
 
     def execute_action(self, action_type: str, target: str = None) -> dict:
