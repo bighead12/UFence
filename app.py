@@ -143,6 +143,7 @@ else:
                     try:
                         action, target = crew.interpret_user_intent(prompt)
                         result = crew.execute_exchange(action, target)
+                        score = crew.referee.score
 
                         fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
                         opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
