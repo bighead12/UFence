@@ -109,3 +109,5 @@ ruff check .
 ## License
 
 MIT
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bighead12/UFence)
