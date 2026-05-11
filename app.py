@@ -134,62 +134,67 @@ else:
                     st.markdown(last["content"])
 
             if prompt := st.chat_input("Describe your fencing move..."):
-                st.session_state.messages.append({"role": "user", "content": prompt})
+                if not st.session_state.get("_processing_message"):
+                    st.session_state._processing_message = True
+                    st.session_state.messages.append({"role": "user", "content": prompt})
 
-                with st.chat_message("user"):
-                    st.markdown(prompt)
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
 
-                with st.spinner("Interpreting and executing..."):
-                    try:
-                        action, target = crew.interpret_user_intent(prompt)
-                        result = crew.execute_exchange(action, target)
-                        score = crew.referee.score
+                    with st.spinner("Interpreting and executing..."):
+                        try:
+                            action, target = crew.interpret_user_intent(prompt)
+                            result = crew.execute_exchange(action, target)
+                            score = crew.referee.score
 
-                        fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
-                        opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
-                        referee_call = result.get("referee_call", {})
-                        call = referee_call.get("call", "simultaneous")
-                        reason = referee_call.get("reason", "")
+                            fencer_action = result.get("fencer_action", {}).get("type", "direct_attack")
+                            opponent_action = result.get("opponent_action", {}).get("type", "direct_attack")
+                            referee_call = result.get("referee_call", {})
+                            call = referee_call.get("call", "simultaneous")
+                            reason = referee_call.get("reason", "")
 
-                        action_labels = {
-                            "direct_attack": "Direct Attack", "compound_attack": "Compound Attack",
-                            "fleche": "Fleche", "parry_and_riposte": "Parry & Riposte",
-                            "counter_attack": "Counter-Attack", "remise": "Remise", "prise_de_fer": "Prise de Fer",
-                        }
-                        action_label = action_labels.get(action, action)
-                        opp_label = action_labels.get(opponent_action, opponent_action)
+                            action_labels = {
+                                "direct_attack": "Direct Attack", "compound_attack": "Compound Attack",
+                                "fleche": "Fleche", "parry_and_riposte": "Parry & Riposte",
+                                "counter_attack": "Counter-Attack", "remise": "Remise", "prise_de_fer": "Prise de Fer",
+                            }
+                            action_label = action_labels.get(action, action)
+                            opp_label = action_labels.get(opponent_action, opponent_action)
 
-                        call_icons = {"fencer": "✅", "opponent": "❌", "simultaneous": "🤝"}
-                        call_text = {"fencer": "You scored!", "opponent": "Opponent scored.", "simultaneous": "Simultaneous"}
+                            call_icons = {"fencer": "✅", "opponent": "❌", "simultaneous": "🤝"}
+                            call_text = {"fencer": "You scored!", "opponent": "Opponent scored.", "simultaneous": "Simultaneous"}
 
-                        assistant_msg = (
-                            f"**You:** {action_label} → *{target}*\n\n"
-                            f"**Opponent:** {opp_label}\n\n"
-                            f"{call_icons.get(call, '⚔️')} **{call_text.get(call, '')}** — {reason}\n\n"
-                            f"🔵 {result['score']['fencer']} — 🔴 {result['score']['opponent']}"
-                        )
+                            assistant_msg = (
+                                f"**You:** {action_label} → *{target}*\n\n"
+                                f"**Opponent:** {opp_label}\n\n"
+                                f"{call_icons.get(call, '⚔️')} **{call_text.get(call, '')}** — {reason}\n\n"
+                                f"🔵 {result['score']['fencer']} — 🔴 {result['score']['opponent']}"
+                            )
 
-                        with st.chat_message("assistant"):
-                            st.markdown(assistant_msg)
-                            with st.expander("🎬 Show animation"):
-                                animation_html = render_complete_animation(
-                                    fencer_action, opponent_action, call,
-                                    result.get("score", {}).get("fencer", 0),
-                                    result.get("score", {}).get("opponent", 0)
-                                )
-                                components.html(animation_html, height=400)
+                            with st.chat_message("assistant"):
+                                st.markdown(assistant_msg)
+                                with st.expander("🎬 Show animation"):
+                                    animation_html = render_complete_animation(
+                                        fencer_action, opponent_action, call,
+                                        result.get("score", {}).get("fencer", 0),
+                                        result.get("score", {}).get("opponent", 0)
+                                    )
+                                    components.html(animation_html, height=400)
 
-                        st.session_state.messages.append({"role": "assistant", "content": assistant_msg})
-                        st.session_state.exchange_results.append(result)
-                        st.session_state.last_result = referee_call
+                            st.session_state.messages.append({"role": "assistant", "content": assistant_msg})
+                            st.session_state.exchange_results.append(result)
+                            st.session_state.last_result = referee_call
 
-                        if result.get("match_over"):
                             st.rerun()
 
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-                        with st.expander("Debug"):
-                            st.code(traceback.format_exc())
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                            with st.expander("Debug"):
+                                st.code(traceback.format_exc())
+                        finally:
+                            st.session_state._processing_message = False
+                else:
+                    st.session_state._processing_message = False
 
     with tab2:
         render_history_panel(st.session_state.exchange_results)
