@@ -128,10 +128,9 @@ else:
 
             st.caption(f"🔵 {score['fencer']} — 🔴 {score['opponent']}  |  Exchange {crew.exchange_number}")
 
-            if st.session_state.messages:
-                last = st.session_state.messages[-1]
-                with st.chat_message(last["role"]):
-                    st.markdown(last["content"])
+            for msg in st.session_state.messages:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
 
             if prompt := st.chat_input("Describe your fencing move..."):
                 if not st.session_state.get("_processing_message"):
@@ -181,7 +180,16 @@ else:
                                     )
                                     components.html(animation_html, height=400)
 
-                            st.session_state.messages.append({"role": "assistant", "content": assistant_msg})
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": assistant_msg,
+                                "animation_html": animation_html,
+                                "fencer_action": fencer_action,
+                                "opponent_action": opponent_action,
+                                "call": call,
+                                "fencer_score": result.get("score", {}).get("fencer", 0),
+                                "opponent_score": result.get("score", {}).get("opponent", 0)
+                            })
                             st.session_state.exchange_results.append(result)
                             st.session_state.last_result = referee_call
 

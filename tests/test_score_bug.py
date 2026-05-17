@@ -1,4 +1,3 @@
-import pytest
 from src.crew.fencing_crew import FencingCrew
 
 
