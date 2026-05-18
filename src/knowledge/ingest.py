@@ -5,7 +5,6 @@ Extracts text from PDF files, chunks it, embeds it, and stores
 in a persistent ChromaDB collection for RAG retrieval.
 """
 
-import os
 from pathlib import Path
 from typing import List
 

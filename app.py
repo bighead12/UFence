@@ -1,6 +1,6 @@
 import streamlit as st
 from src.crew.fencing_crew import FencingCrew
-from src.utils.config import WINNING_SCORE, BOOKS_DIR
+from src.utils.config import WINNING_SCORE
 from src.visualization.fencer_svg import render_fencer_arena
 from src.visualization.animator import render_complete_animation
 from src.visualization.history import render_history_panel

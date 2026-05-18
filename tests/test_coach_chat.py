@@ -5,17 +5,12 @@ Covers: PDF text extraction, chunking, ingestion, retrieval,
 coach chat prompt building, and fallback behavior.
 """
 
-import os
-import tempfile
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from src.knowledge.ingest import (
-    extract_text_from_pdf,
     chunk_text,
-    ingest_books,
     get_ingestion_status,
 )
 from src.knowledge.retriever import BookRetriever
