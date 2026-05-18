@@ -1,3 +1,4 @@
+import litellm
 from typing import List
 from src.utils.logging import get_logger
 
@@ -151,6 +152,7 @@ class CoachAgent:
         - sources: List of source references used
         """
         from src.knowledge.retriever import BookRetriever
+        from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
 
         # Format retrieved book passages
         retriever = BookRetriever()
@@ -198,9 +200,6 @@ class CoachAgent:
 
         # Call LLM
         try:
-            import litellm
-            from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
-
             response = litellm.completion(
                 model=f"ollama/{OLLAMA_MODEL}",
                 messages=messages,
