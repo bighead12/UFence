@@ -13,6 +13,14 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 WINNING_SCORE = int(os.getenv("WINNING_SCORE", "5"))
 
+# RAG / Coach Chat settings
+BOOKS_DIR = PROJECT_ROOT / "data" / "books"
+VECTORSTORE_DIR = PROJECT_ROOT / "data" / "vectorstore"
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "500"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
+
 def get_rules():
     import json
     with open(RULES_FILE, "r") as f:

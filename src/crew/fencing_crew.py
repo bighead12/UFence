@@ -135,3 +135,22 @@ class FencingCrew:
 
     def get_valid_targets(self) -> list:
         return self.fencer.get_valid_targets()
+
+    def coach_chat(self, question: str, retriever) -> dict:
+        """
+        Handle a coach chat question using the RAG retriever.
+
+        Args:
+            question: The athlete's question text
+            retriever: A BookRetriever instance
+
+        Returns:
+            dict with 'answer' and 'sources' keys
+        """
+        passages = retriever.retrieve(question)
+        return self.coach.chat(
+            question,
+            passages,
+            self.referee.exchange_history,
+            self.referee.score,
+        )

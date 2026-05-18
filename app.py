@@ -1,9 +1,11 @@
 import streamlit as st
 from src.crew.fencing_crew import FencingCrew
-from src.utils.config import WINNING_SCORE
+from src.utils.config import WINNING_SCORE, BOOKS_DIR
 from src.visualization.fencer_svg import render_fencer_arena
 from src.visualization.animator import render_complete_animation
 from src.visualization.history import render_history_panel
+from src.knowledge.retriever import BookRetriever
+from src.knowledge.ingest import ingest_books, get_ingestion_status
 import streamlit.components.v1 as components
 import traceback
 
@@ -29,6 +31,8 @@ if "crew" not in st.session_state:
     st.session_state.exchange_results = []
     st.session_state.last_result = None
     st.session_state.messages = []
+    st.session_state.coach_messages = []
+    st.session_state.book_retriever = None
 
 if st.session_state.crew is None:
     try:
@@ -57,6 +61,7 @@ if not st.session_state.match_started:
         st.session_state.exchange_results = []
         st.session_state.last_result = None
         st.session_state.messages = []
+        st.session_state.coach_messages = []
         st.rerun()
 
 else:
@@ -111,6 +116,7 @@ else:
                 st.session_state.exchange_results = []
                 st.session_state.last_result = None
                 st.session_state.messages = []
+                st.session_state.coach_messages = []
                 st.rerun()
 
         else:
@@ -248,6 +254,136 @@ else:
                     st.metric("Ties", sa.get('ties', 0))
         else:
             st.info("Complete some exchanges to get coach feedback!")
+
+        # --- Coach Chat Section ---
+        st.divider()
+        st.markdown("### 💬 Ask Your Coach")
+        st.caption("Ask questions about your performance, technique, or fencing strategy. The coach uses knowledge from fencing reference books.")
+
+        # Check book ingestion status
+        status = get_ingestion_status()
+        has_pdfs = len(status["pdf_files"]) > 0
+        has_vectorstore = status["total_chunks"] > 0
+
+        # Show persistence success message if present in state
+        if st.session_state.get("show_ingestion_success"):
+            st.success("✅ Knowledge base successfully populated and ready!")
+
+        if not has_pdfs and not has_vectorstore:
+            st.warning(
+                "📚 No fencing PDF books found. "
+                "You can place your PDF files in `data/books` to build a custom knowledge base."
+            )
+            st.info("💡 You can initialize the Coach's knowledge base using the built-in Fencing Rules Handbook!")
+            if st.button("📥 Initialize Rules Knowledge Base", type="primary"):
+                with st.spinner("Initializing rules knowledge base..."):
+                    try:
+                        collection = ingest_books()
+                        if collection:
+                            st.session_state.show_ingestion_success = True
+                            st.session_state.book_retriever = None  # Force reload
+                            st.rerun()
+                        else:
+                            st.error("Failed to initialize database.")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+        elif not has_vectorstore:
+            st.info(
+                f"📚 Found {len(status['pdf_files'])} PDF(s) ready to ingest: "
+                f"{', '.join(status['pdf_files'])}"
+            )
+            st.markdown("*(Note: Scanned/image-only PDFs will automatically trigger a rules-fallback ingestion to ensure a working coach experience)*")
+            if st.button("📥 Ingest Books & Rules into Knowledge Base", type="primary"):
+                with st.spinner("Ingesting knowledge base... This may take a minute on first run."):
+                    try:
+                        collection = ingest_books()
+                        if collection:
+                            st.session_state.show_ingestion_success = True
+                            st.session_state.book_retriever = None  # Force reload
+                            st.rerun()
+                        else:
+                            st.error("Ingestion failed. Check the logs.")
+                    except Exception as e:
+                        st.error(f"Ingestion error: {e}")
+        else:
+            # Retriever is available — show chat
+            with st.expander(f"📚 Knowledge Base: {status['total_chunks']} chunks from {len(status['ingested_sources'])} source(s)", expanded=False):
+                for src in status["ingested_sources"]:
+                    st.markdown(f"- ✅ {src}")
+                if status["pending"]:
+                    st.markdown("**Pending:**")
+                    for src in status["pending"]:
+                        st.markdown(f"- ⏳ {src}")
+                    if st.button("📥 Ingest New Books"):
+                        with st.spinner("Ingesting..."):
+                            ingest_books()
+                            st.session_state.book_retriever = None
+                            st.rerun()
+
+            # Lazy-initialize the retriever
+            if st.session_state.book_retriever is None:
+                st.session_state.book_retriever = BookRetriever()
+
+            retriever = st.session_state.book_retriever
+
+            if not retriever.is_ready:
+                st.warning("Knowledge base is not ready. Try re-ingesting the books.")
+            else:
+                # Display chat history
+                for msg in st.session_state.coach_messages:
+                    with st.chat_message(msg["role"], avatar="🏋️" if msg["role"] == "user" else "🧑‍🏫"):
+                        st.markdown(msg["content"])
+                        if msg.get("sources"):
+                            with st.expander("📚 Sources"):
+                                for s in msg["sources"]:
+                                    page_info = f", p. {s['page']}" if s.get('page') else ""
+                                    st.markdown(f"- *{s['source']}*{page_info}")
+
+                # If the last message is from user, generate assistant response
+                if st.session_state.coach_messages and st.session_state.coach_messages[-1]["role"] == "user":
+                    user_msg = st.session_state.coach_messages[-1]["content"]
+                    with st.chat_message("assistant", avatar="🧑‍🏫"):
+                        with st.spinner("Coach is thinking..."):
+                            try:
+                                result = crew.coach_chat(user_msg, retriever)
+                                answer = result["answer"]
+                                sources = result["sources"]
+
+                                st.markdown(answer)
+                                if sources:
+                                    with st.expander("📚 Sources"):
+                                        for s in sources:
+                                            page_info = f", p. {s['page']}" if s.get('page') else ""
+                                            st.markdown(f"- *{s['source']}*{page_info}")
+
+                                st.session_state.coach_messages.append({
+                                    "role": "assistant",
+                                    "content": answer,
+                                    "sources": sources,
+                                })
+                                # Clear success banner on first question
+                                if "show_ingestion_success" in st.session_state:
+                                    del st.session_state.show_ingestion_success
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                                with st.expander("Debug"):
+                                    st.code(traceback.format_exc())
+
+                # Chat input using form to bypass Streamlit single st.chat_input restriction
+                with st.form(key="coach_chat_form", clear_on_submit=True):
+                    col_input, col_btn = st.columns([5, 1])
+                    with col_input:
+                        coach_question = st.text_input("Ask your coach a question:", placeholder="e.g. How can I defend better against fleche?", label_visibility="collapsed")
+                    with col_btn:
+                        submit_button = st.form_submit_button(label="Send", use_container_width=True)
+
+                if submit_button and coach_question:
+                    st.session_state.coach_messages.append({
+                        "role": "user",
+                        "content": coach_question,
+                    })
+                    st.rerun()
 
 st.markdown("---")
 st.markdown("<p style='text-align: center; color: gray;'>UFence - AI-Powered Fencing Exchange Simulator</p>", unsafe_allow_html=True)
