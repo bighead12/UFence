@@ -11,6 +11,38 @@ import traceback
 
 st.set_page_config(page_title="UFence - Fencing Exchange Simulator", page_icon="🤺", layout="wide")
 
+import os
+
+# Sidebar for Gemini Configuration
+st.sidebar.title("🤺 UFence Control Panel")
+st.sidebar.markdown("---")
+
+# Retrieve API Key from env if present
+env_key = os.getenv("GEMINI_API_KEY", "")
+
+# Key input (hides character by default)
+api_key = st.sidebar.text_input(
+    "🔑 Google Gemini API Key",
+    value=env_key,
+    type="password",
+    help="Get a free key from Google AI Studio (aistudio.google.com)"
+)
+
+# If key is provided in UI, set it in environment for LiteLLM to use
+if api_key:
+    os.environ["GEMINI_API_KEY"] = api_key
+    st.sidebar.success("🟢 API Key Active")
+else:
+    st.sidebar.warning("🔴 Missing API Key. Enter a key to enable Coach Chat & Natural Language interpretation!")
+
+st.sidebar.markdown("---")
+st.sidebar.info(
+    "💡 **Google Gemini Mode Active**\n\n"
+    "This app now uses **Gemini 2.5 Flash** (Free Tier) to power the fencing referee interpretation and Coach feedback agents! "
+    "This allows for fast, cloud-hosted intelligence without running local GPU/Ollama servers."
+)
+
+
 st.markdown("""
 <style>
 @keyframes pulse {

@@ -152,7 +152,7 @@ class CoachAgent:
         - sources: List of source references used
         """
         from src.knowledge.retriever import BookRetriever
-        from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
+        from src.utils.config import GEMINI_MODEL
 
         # Format retrieved book passages
         retriever = BookRetriever()
@@ -201,9 +201,8 @@ class CoachAgent:
         # Call LLM
         try:
             response = litellm.completion(
-                model=f"ollama/{OLLAMA_MODEL}",
+                model=GEMINI_MODEL,
                 messages=messages,
-                api_base=OLLAMA_BASE_URL,
                 max_tokens=800,
             )
             answer = response.choices[0].message.content.strip()
@@ -211,7 +210,7 @@ class CoachAgent:
             logger.error(f"Coach chat LLM error: {e}")
             answer = (
                 "I'm having trouble connecting right now. "
-                "Please check that Ollama is running and try again."
+                "Please check that your Gemini API Key is configured and try again."
             )
 
         # Extract source citations
