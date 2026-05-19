@@ -103,7 +103,7 @@ def ingest_books(
     vectorstore_dir: Path = VECTORSTORE_DIR,
 ) -> chromadb.Collection:
     """
-    Ingest all PDF files in books_dir into a persistent ChromaDB collection.
+    Ingest all books (PDF or pre-transcribed TXT) into a persistent ChromaDB collection.
 
     Skips files that have already been ingested (idempotent).
     Returns the ChromaDB collection.
@@ -112,7 +112,17 @@ def ingest_books(
     vectorstore_dir = Path(vectorstore_dir)
     vectorstore_dir.mkdir(parents=True, exist_ok=True)
 
-    pdf_files = sorted(books_dir.glob("*.pdf"))
+    # Gather PDF and TXT files
+    pdf_files = {f.stem: f for f in books_dir.glob("*.pdf")}
+    txt_files = {f.stem: f for f in books_dir.glob("*.txt")}
+
+    # Prefer TXT files over PDFs if both exist
+    files_to_ingest = []
+    for stem in sorted(set(pdf_files.keys()) | set(txt_files.keys())):
+        if stem in txt_files:
+            files_to_ingest.append(txt_files[stem])
+        else:
+            files_to_ingest.append(pdf_files[stem])
 
     # Initialize ChromaDB with persistent storage
     client = chromadb.PersistentClient(path=str(vectorstore_dir))
@@ -127,12 +137,12 @@ def ingest_books(
         embedding_function=ef,
     )
 
-    if not pdf_files:
-        logger.warning(f"No PDF files found in {books_dir}. Initializing knowledge base with fallback rules.")
+    if not files_to_ingest:
+        logger.warning(f"No PDF or TXT files found in {books_dir}. Initializing knowledge base with fallback rules.")
         _ingest_rules_fallback(collection)
         return collection
 
-    logger.info(f"Found {len(pdf_files)} PDF files to ingest")
+    logger.info(f"Found {len(files_to_ingest)} books/transcriptions to ingest")
 
     # Check which sources are already ingested
     existing_sources = set()
@@ -143,14 +153,24 @@ def ingest_books(
         }
         logger.info(f"Already ingested sources: {existing_sources}")
 
-    for pdf_path in pdf_files:
-        source_name = pdf_path.name
-        if source_name in existing_sources:
+    for file_path in files_to_ingest:
+        source_name = file_path.name
+        
+        # If ingesting a TXT file, check if either the TXT or original PDF source is already present
+        pdf_source = file_path.with_suffix(".pdf").name
+        if source_name in existing_sources or pdf_source in existing_sources:
             logger.info(f"Skipping already-ingested: {source_name}")
             continue
 
         logger.info(f"Ingesting: {source_name}")
-        text = extract_text_from_pdf(pdf_path)
+        
+        # Load text
+        if file_path.suffix == ".txt":
+            with open(file_path, "r", encoding="utf-8") as f:
+                text = f.read()
+        else:
+            text = extract_text_from_pdf(file_path)
+            
         chunks = chunk_text(text, source_name)
 
         if not chunks:
@@ -251,8 +271,12 @@ def get_ingestion_status(
     books_dir = Path(books_dir)
     vectorstore_dir = Path(vectorstore_dir)
 
-    pdf_files = sorted(books_dir.glob("*.pdf"))
-    pdf_names = [f.name for f in pdf_files]
+    pdf_files = {f.stem: f.name for f in books_dir.glob("*.pdf")}
+    txt_files = {f.stem: f.name for f in books_dir.glob("*.txt")}
+    
+    # Combined set of stems
+    all_stems = sorted(set(pdf_files.keys()) | set(txt_files.keys()))
+    pdf_names = [pdf_files.get(stem, f"{stem}.pdf") for stem in all_stems]
 
     ingested_sources = set()
     total_chunks = 0
@@ -276,10 +300,18 @@ def get_ingestion_status(
         except Exception as e:
             logger.error(f"Error checking ingestion status: {e}")
 
+    # A source is pending if neither its PDF nor its TXT file version is ingested
+    pending = []
+    for stem in all_stems:
+        pdf_name = pdf_files.get(stem, f"{stem}.pdf")
+        txt_name = txt_files.get(stem, f"{stem}.txt")
+        if pdf_name not in ingested_sources and txt_name not in ingested_sources:
+            pending.append(pdf_name)
+
     return {
         "pdf_files": pdf_names,
         "ingested_sources": list(ingested_sources),
-        "pending": [n for n in pdf_names if n not in ingested_sources],
+        "pending": pending,
         "total_chunks": total_chunks,
     }
 
