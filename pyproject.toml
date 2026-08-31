@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "crewai[tools]>=0.80.0",
     "crewai-tools>=0.10.0",
-    "litellm>=1.40.0",
+    "litellm>=1.40.0,<1.50",
     "streamlit>=1.40.0",
     "python-dotenv>=1.0.0",
     "chromadb>=0.5.0",
