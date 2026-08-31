@@ -106,6 +106,7 @@ class FencingCrew:
 
         try:
             import litellm
+
             from src.utils.config import GEMINI_MODEL
             response = litellm.completion(
                 model=GEMINI_MODEL,
@@ -115,8 +116,7 @@ class FencingCrew:
             content = response.choices[0].message.content.strip()
             if content.startswith("```"):
                 content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
+                content = content.removeprefix("json")
             import json
             result = json.loads(content)
             action = result.get("action", "direct_attack")

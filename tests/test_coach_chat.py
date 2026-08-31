@@ -5,17 +5,16 @@ Covers: PDF text extraction, chunking, ingestion, retrieval,
 coach chat prompt building, and fallback behavior.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.agents.coach import CoachAgent
 from src.knowledge.ingest import (
     chunk_text,
     get_ingestion_status,
 )
 from src.knowledge.retriever import BookRetriever
-from src.agents.coach import CoachAgent
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -217,7 +216,7 @@ class TestCoachChat:
     @patch("src.agents.coach.litellm")
     def test_chat_fallback_on_error(self, mock_litellm, coach, mock_exchange_history):
         """Verify graceful fallback when LLM is unavailable."""
-        mock_litellm.completion.side_effect = Exception("Connection refused")
+        mock_litellm.completion.side_effect = ValueError("LLM response parse error")
 
         result = coach.chat(
             question="Help me",

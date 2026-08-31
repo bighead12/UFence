@@ -1,5 +1,6 @@
+
 import litellm
-from typing import List
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -193,8 +194,7 @@ class CoachAgent:
         ]
 
         # Include prior chat turns for conversational continuity
-        for turn in self.chat_history[-6:]:  # Last 3 exchanges (6 messages)
-            messages.append(turn)
+        messages.extend(self.chat_history[-6:])  # Last 3 exchanges (6 messages)
 
         messages.append({"role": "user", "content": question})
 
@@ -206,7 +206,7 @@ class CoachAgent:
                 max_tokens=800,
             )
             answer = response.choices[0].message.content.strip()
-        except Exception as e:
+        except (KeyError, ValueError, ConnectionError, TypeError) as e:
             logger.error(f"Coach chat LLM error: {e}")
             answer = (
                 "I'm having trouble connecting right now. "
@@ -238,8 +238,10 @@ class CoachAgent:
             return "No match data available yet."
 
         lines = [
-            f"Current score: You {score.get('fencer', 0)} - "
-            f"Opponent {score.get('opponent', 0)}",
+            (
+                f"Current score: You {score.get('fencer', 0)} - "
+                f"Opponent {score.get('opponent', 0)}"
+            ),
             f"Total exchanges: {len(exchange_history)}",
             "",
             "Recent exchanges:",
