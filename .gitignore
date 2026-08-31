@@ -45,3 +45,6 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+# Local data (PDFs & Vector store)
+data/books/*.pdf

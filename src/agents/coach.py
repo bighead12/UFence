@@ -1,4 +1,5 @@
-
+import litellm
+from typing import List
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -7,6 +8,7 @@ logger = get_logger(__name__)
 class CoachAgent:
     def __init__(self):
         self.feedback_history = []
+        self.chat_history = []
 
     def analyze_exchange(self, exchange_history: list[dict], score: dict) -> dict:
         if not exchange_history:
@@ -133,3 +135,126 @@ class CoachAgent:
 
     def reset(self):
         self.feedback_history = []
+        self.chat_history = []
+
+    def chat(
+        self,
+        question: str,
+        retrieved_passages: list,
+        exchange_history: list,
+        score: dict,
+    ) -> dict:
+        """
+        Answer an athlete's question using RAG context and match data.
+
+        Returns a dict with:
+        - answer: The coach's response text
+        - sources: List of source references used
+        """
+        from src.knowledge.retriever import BookRetriever
+        from src.utils.config import GEMINI_MODEL
+
+        # Format retrieved book passages
+        retriever = BookRetriever()
+        passages_text = retriever.format_passages_for_prompt(retrieved_passages)
+
+        # Summarize match context
+        match_context = self._build_match_context(exchange_history, score)
+
+        # Summarize any existing feedback
+        feedback_summary = ""
+        if self.feedback_history:
+            latest = self.feedback_history[-1]
+            feedback_summary = (
+                f"Latest coach feedback summary: {latest.get('summary', 'N/A')}\n"
+                f"Technical notes: {', '.join(latest.get('technical', []))}\n"
+                f"Tactical notes: {', '.join(latest.get('tactical', []))}\n"
+            )
+
+        # Build the conversation history for multi-turn support
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert fencing coach with deep knowledge of foil fencing "
+                    "technique, strategy, and rules. You are speaking with your athlete "
+                    "after a training match.\n\n"
+                    "Use the provided REFERENCE MATERIAL from fencing books to support "
+                    "your answers. Cite the book name when referencing specific material.\n"
+                    "Also use the MATCH CONTEXT to tie your advice to what actually "
+                    "happened in the current match.\n\n"
+                    "Be specific, encouraging, and instructive. Use fencing terminology "
+                    "correctly. Keep answers focused and actionable.\n\n"
+                    f"REFERENCE MATERIAL:\n{passages_text}\n\n"
+                    f"MATCH CONTEXT:\n{match_context}\n\n"
+                    f"{feedback_summary}"
+                ),
+            }
+        ]
+
+        # Include prior chat turns for conversational continuity
+        for turn in self.chat_history[-6:]:  # Last 3 exchanges (6 messages)
+            messages.append(turn)
+
+        messages.append({"role": "user", "content": question})
+
+        # Call LLM
+        try:
+            response = litellm.completion(
+                model=GEMINI_MODEL,
+                messages=messages,
+                max_tokens=800,
+            )
+            answer = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Coach chat LLM error: {e}")
+            answer = (
+                "I'm having trouble connecting right now. "
+                "Please check that your Gemini API Key is configured and try again."
+            )
+
+        # Extract source citations
+        sources = []
+        seen = set()
+        for p in retrieved_passages:
+            key = f"{p['source']}_p{p.get('page', 0)}"
+            if key not in seen:
+                sources.append({
+                    "source": p["source"],
+                    "page": p.get("page", 0),
+                })
+                seen.add(key)
+
+        # Store in chat history for multi-turn
+        self.chat_history.append({"role": "user", "content": question})
+        self.chat_history.append({"role": "assistant", "content": answer})
+
+        logger.info(f"Coach answered question: {question[:50]}...")
+        return {"answer": answer, "sources": sources}
+
+    def _build_match_context(self, exchange_history: list, score: dict) -> str:
+        """Summarize match state for the LLM prompt."""
+        if not exchange_history:
+            return "No match data available yet."
+
+        lines = [
+            f"Current score: You {score.get('fencer', 0)} - "
+            f"Opponent {score.get('opponent', 0)}",
+            f"Total exchanges: {len(exchange_history)}",
+            "",
+            "Recent exchanges:",
+        ]
+
+        # Show last 5 exchanges
+        for i, ex in enumerate(exchange_history[-5:], start=1):
+            fa = ex.get("fencer_action", {})
+            oa = ex.get("opponent_action", {})
+            result = ex.get("result", {})
+            call = result.get("call", "unknown")
+            lines.append(
+                f"  {i}. You: {fa.get('type', '?')} → {fa.get('target', '?')} | "
+                f"Opponent: {oa.get('type', '?')} → {oa.get('target', '?')} | "
+                f"Result: {call}"
+            )
+
+        return "\n".join(lines)

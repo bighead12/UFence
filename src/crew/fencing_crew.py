@@ -106,15 +106,17 @@ class FencingCrew:
 
         try:
             import litellm
-
-            from src.utils.config import OLLAMA_BASE_URL, OLLAMA_MODEL
+            from src.utils.config import GEMINI_MODEL
             response = litellm.completion(
-                model=f"ollama/{OLLAMA_MODEL}",
+                model=GEMINI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                api_base=OLLAMA_BASE_URL,
                 max_tokens=50,
             )
             content = response.choices[0].message.content.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
             import json
             result = json.loads(content)
             action = result.get("action", "direct_attack")
@@ -137,3 +139,22 @@ class FencingCrew:
 
     def get_valid_targets(self) -> list:
         return self.fencer.get_valid_targets()
+
+    def coach_chat(self, question: str, retriever) -> dict:
+        """
+        Handle a coach chat question using the RAG retriever.
+
+        Args:
+            question: The athlete's question text
+            retriever: A BookRetriever instance
+
+        Returns:
+            dict with 'answer' and 'sources' keys
+        """
+        passages = retriever.retrieve(question)
+        return self.coach.chat(
+            question,
+            passages,
+            self.referee.exchange_history,
+            self.referee.score,
+        )
