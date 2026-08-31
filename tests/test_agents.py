@@ -1,7 +1,7 @@
+from src.agents.coach import CoachAgent
 from src.agents.fencer import FencerAgent
 from src.agents.opponent import OpponentAgent
 from src.agents.referee import RefereeAgent
-from src.agents.coach import CoachAgent
 
 
 class TestFencerAgent:

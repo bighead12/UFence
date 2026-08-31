@@ -1,8 +1,9 @@
 import random
+
+from src.agents.coach import CoachAgent
 from src.agents.fencer import FencerAgent
 from src.agents.opponent import OpponentAgent
 from src.agents.referee import RefereeAgent
-from src.agents.coach import CoachAgent
 from src.utils.config import WINNING_SCORE
 from src.utils.logging import get_logger
 
@@ -44,7 +45,7 @@ class FencingCrew:
             "distance": self.current_distance
         }
 
-    def execute_exchange(self, fencer_action: str = None, target: str = "torso") -> dict:
+    def execute_exchange(self, fencer_action: str | None = None, target: str = "torso") -> dict:
         self.exchange_number += 1
 
         self.opponent.init_exchange()
@@ -105,7 +106,8 @@ class FencingCrew:
 
         try:
             import litellm
-            from src.utils.config import OLLAMA_MODEL, OLLAMA_BASE_URL
+
+            from src.utils.config import OLLAMA_BASE_URL, OLLAMA_MODEL
             response = litellm.completion(
                 model=f"ollama/{OLLAMA_MODEL}",
                 messages=[{"role": "user", "content": prompt}],
@@ -117,7 +119,7 @@ class FencingCrew:
             result = json.loads(content)
             action = result.get("action", "direct_attack")
             target = result.get("target", "torso")
-        except Exception:
+        except (json.JSONDecodeError, KeyError, ValueError):
             action = "direct_attack"
             target = "torso"
 

@@ -1,4 +1,4 @@
-from typing import List
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -8,7 +8,7 @@ class CoachAgent:
     def __init__(self):
         self.feedback_history = []
 
-    def analyze_exchange(self, exchange_history: List[dict], score: dict) -> dict:
+    def analyze_exchange(self, exchange_history: list[dict], score: dict) -> dict:
         if not exchange_history:
             return {"error": "No exchange data to analyze"}
 
@@ -41,7 +41,7 @@ class CoachAgent:
         winner = "You" if score["fencer"] > score["opponent"] else "Opponent"
         return f"Match ended {score['fencer']}-{score['opponent']}. {winner} won. You scored {fencer_wins} out of {fencer_wins + opponent_wins} decisions."
 
-    def _analyze_technical(self, fencer_actions: List[dict]) -> List[str]:
+    def _analyze_technical(self, fencer_actions: list[dict]) -> list[str]:
         feedback = []
         action_types = [a.get("type", "") for a in fencer_actions]
 
@@ -62,7 +62,7 @@ class CoachAgent:
             feedback.append("Good variety in technical actions. Continue practicing all attack types.")
         return feedback
 
-    def _analyze_strategic(self, fencer_actions: List[dict]) -> List[str]:
+    def _analyze_strategic(self, fencer_actions: list[dict]) -> list[str]:
         feedback = []
         targets = [a.get("target", "") for a in fencer_actions]
 
@@ -82,7 +82,7 @@ class CoachAgent:
             feedback.append("Good strategic awareness in target selection.")
         return feedback
 
-    def _analyze_tactical(self, fencer_actions: List[dict], referee_calls: List[str]) -> List[str]:
+    def _analyze_tactical(self, fencer_actions: list[dict], referee_calls: list[str]) -> list[str]:
         feedback = []
         action_types = [a.get("type", "") for a in fencer_actions]
 
@@ -109,7 +109,7 @@ class CoachAgent:
             feedback.append("Strong tactical execution. Your decision-making was solid.")
         return feedback
 
-    def _generate_recommendations(self, fencer_actions: List[dict], fencer_wins: int, opponent_wins: int) -> List[str]:
+    def _generate_recommendations(self, fencer_actions: list[dict], fencer_wins: int, opponent_wins: int) -> list[str]:
         recommendations = []
 
         if fencer_wins < opponent_wins:

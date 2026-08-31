@@ -1,6 +1,8 @@
 import logging
 import sys
+
 from src.utils.config import LOG_LEVEL
+
 
 def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)

@@ -1,6 +1,6 @@
-import streamlit as st
+
 import matplotlib.pyplot as plt
-from typing import List, Dict
+import streamlit as st
 
 
 class HistoryPanel:
@@ -17,10 +17,10 @@ class HistoryPanel:
             "opp_scored": result.get("opponent_score", 0)
         })
 
-    def get_timeline(self) -> List[Dict]:
+    def get_timeline(self) -> list[dict]:
         return self.exchanges
 
-    def get_score_history(self) -> Dict:
+    def get_score_history(self) -> dict:
         you_scores = []
         opp_scores = []
         cumulative_you = 0
@@ -110,7 +110,7 @@ class HistoryPanel:
         self.exchanges = []
 
 
-def render_history_panel(exchange_results: List[dict]):
+def render_history_panel(exchange_results: list[dict]):
     panel = HistoryPanel()
 
     for result in exchange_results:
