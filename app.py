@@ -5,12 +5,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from src.crew.fencing_crew import FencingCrew
-from src.utils.config import WINNING_SCORE
-from src.visualization.fencer_svg import render_fencer_arena
-from src.visualization.animator import render_complete_animation
-from src.visualization.history import render_history_panel
+from src.knowledge.ingest import get_ingestion_status, ingest_books
 from src.knowledge.retriever import BookRetriever
-from src.knowledge.ingest import ingest_books, get_ingestion_status
+from src.utils.config import WINNING_SCORE
+from src.visualization.animator import render_complete_animation
+from src.visualization.fencer_svg import render_fencer_arena
+from src.visualization.history import render_history_panel
 
 st.set_page_config(
     page_title="UFence - Fencing Exchange Simulator",
@@ -66,7 +66,7 @@ st.markdown("""
 if "crew" not in st.session_state:
     try:
         st.session_state.crew = FencingCrew()
-    except Exception as e:
+    except (ConnectionError, RuntimeError, ValueError) as e:
         st.error(f"Error initializing crew: {e}")
         st.session_state.crew = None
     st.session_state.match_started = False
@@ -79,7 +79,7 @@ if "crew" not in st.session_state:
 if st.session_state.crew is None:
     try:
         st.session_state.crew = FencingCrew()
-    except Exception as e:
+    except (ConnectionError, RuntimeError, ValueError) as e:
         st.error(f"Error recreating crew: {e}")
         st.button("Retry", on_click=lambda: st.rerun())
 
@@ -302,7 +302,7 @@ else:
 
                             st.rerun()
 
-                        except Exception as e:
+                        except (ValueError, RuntimeError) as e:
                             st.error(f"Error: {e}")
                             with st.expander("Debug"):
                                 st.code(traceback.format_exc())
@@ -395,7 +395,7 @@ else:
                             st.rerun()
                         else:
                             st.error("Failed to initialize database.")
-                    except Exception as e:
+                    except (ValueError, RuntimeError) as e:
                         st.error(f"Error: {e}")
         elif not has_vectorstore:
             st.info(
@@ -423,7 +423,7 @@ else:
                             st.rerun()
                         else:
                             st.error("Ingestion failed. Check the logs.")
-                    except Exception as e:
+                    except (ValueError, RuntimeError) as e:
                         st.error(f"Ingestion error: {e}")
         else:
             # Retriever is available — show chat
@@ -483,8 +483,7 @@ else:
                     user_msg = (
                         st.session_state.coach_messages[-1]["content"]
                     )
-                    with st.chat_message("assistant", avatar="🧑‍🏫"):
-                        with st.spinner("Coach is thinking..."):
+                    with st.chat_message("assistant", avatar="🧑‍🏫"), st.spinner("Coach is thinking..."):
                             try:
                                 result = crew.coach_chat(
                                     user_msg, retriever
@@ -521,7 +520,7 @@ else:
                                         .show_ingestion_success
                                     )
                                 st.rerun()
-                            except Exception as e:
+                            except (ValueError, RuntimeError) as e:
                                 st.error(f"Error: {e}")
                                 with st.expander("Debug"):
                                     st.code(traceback.format_exc())

@@ -7,7 +7,7 @@ class FencerAgent:
     def __init__(self):
         self.action_history = []
 
-    def execute_action(self, action_type: str, target: str = None) -> dict:
+    def execute_action(self, action_type: str, target: str | None = None) -> dict:
         action = {
             "type": action_type,
             "target": target or "torso",

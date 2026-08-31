@@ -6,15 +6,14 @@ book passages for a given question.
 """
 
 from pathlib import Path
-from typing import List, Optional
 
 import chromadb
 from chromadb.utils import embedding_functions
 
 from src.utils.config import (
-    VECTORSTORE_DIR,
     EMBEDDING_MODEL,
     RAG_TOP_K,
+    VECTORSTORE_DIR,
 )
 from src.utils.logging import get_logger
 
@@ -33,7 +32,7 @@ class BookRetriever:
     ):
         self._vectorstore_dir = Path(vectorstore_dir)
         self._embedding_model = embedding_model
-        self._collection: Optional[chromadb.Collection] = None
+        self._collection: chromadb.Collection | None = None
         self._ready = False
 
     def _ensure_loaded(self):
@@ -64,7 +63,7 @@ class BookRetriever:
             logger.info(
                 f"BookRetriever ready with {count} documents"
             )
-        except Exception as e:
+        except (chromadb.errors.ChromaError, OSError, ValueError) as e:
             logger.error(f"Failed to load vectorstore: {e}")
 
     @property
@@ -83,7 +82,7 @@ class BookRetriever:
 
     def retrieve(
         self, query: str, top_k: int = RAG_TOP_K
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Retrieve the top-k most relevant passages for a query.
 
@@ -129,12 +128,12 @@ class BookRetriever:
             )
             return passages
 
-        except Exception as e:
+        except (chromadb.errors.ChromaError, ValueError) as e:
             logger.error(f"Retrieval error: {e}")
             return []
 
     def format_passages_for_prompt(
-        self, passages: List[dict]
+        self, passages: list[dict]
     ) -> str:
         """Format retrieved passages into a string for the LLM prompt."""
         if not passages:

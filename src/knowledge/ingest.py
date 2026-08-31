@@ -6,18 +6,17 @@ in a persistent ChromaDB collection for RAG retrieval.
 """
 
 from pathlib import Path
-from typing import List
 
-import fitz  # PyMuPDF
 import chromadb
+import fitz  # PyMuPDF
 from chromadb.utils import embedding_functions
 
 from src.utils.config import (
     BOOKS_DIR,
-    VECTORSTORE_DIR,
-    EMBEDDING_MODEL,
-    CHUNK_SIZE,
     CHUNK_OVERLAP,
+    CHUNK_SIZE,
+    EMBEDDING_MODEL,
+    VECTORSTORE_DIR,
 )
 from src.utils.logging import get_logger
 
@@ -47,7 +46,7 @@ def chunk_text(
     source_name: str,
     chunk_size: int = CHUNK_SIZE,
     overlap: int = CHUNK_OVERLAP,
-) -> List[dict]:
+) -> list[dict]:
     """
     Split text into overlapping chunks with metadata.
 
@@ -258,7 +257,7 @@ def _ingest_rules_fallback(collection) -> int:
         )
         logger.info(f"Ingested {len(ids)} fallback rule chunks into ChromaDB.")
         return len(ids)
-    except Exception as e:
+    except (chromadb.errors.ChromaError, OSError, ValueError) as e:
         logger.error(f"Failed to ingest fallback rules: {e}")
         return 0
 
@@ -297,7 +296,7 @@ def get_ingestion_status(
                 ingested_sources = {
                     m.get("source", "") for m in meta["metadatas"]
                 }
-        except Exception as e:
+        except (chromadb.errors.ChromaError, OSError, ValueError) as e:
             logger.error(f"Error checking ingestion status: {e}")
 
     # A source is pending if neither its PDF nor its TXT file version is ingested

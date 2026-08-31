@@ -1,4 +1,5 @@
 import random
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -20,7 +21,7 @@ class OpponentAgent:
         else:
             self.phase = "adapting"
 
-    def execute_action(self, fencer_action: dict = None) -> dict:
+    def execute_action(self, fencer_action: dict | None = None) -> dict:
         if fencer_action:
             self._learn_pattern(fencer_action)
 
@@ -92,3 +93,7 @@ class OpponentAgent:
 
     def reset(self):
         self.action_history = []
+        self.fencer_patterns = []
+        self.pattern_counts = {}
+        self.phase = "learning"
+        self.exchange_count = 0

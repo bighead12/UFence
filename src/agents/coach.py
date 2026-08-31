@@ -1,5 +1,6 @@
+
 import litellm
-from typing import List
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -10,7 +11,7 @@ class CoachAgent:
         self.feedback_history = []
         self.chat_history = []
 
-    def analyze_exchange(self, exchange_history: List[dict], score: dict) -> dict:
+    def analyze_exchange(self, exchange_history: list[dict], score: dict) -> dict:
         if not exchange_history:
             return {"error": "No exchange data to analyze"}
 
@@ -43,7 +44,7 @@ class CoachAgent:
         winner = "You" if score["fencer"] > score["opponent"] else "Opponent"
         return f"Match ended {score['fencer']}-{score['opponent']}. {winner} won. You scored {fencer_wins} out of {fencer_wins + opponent_wins} decisions."
 
-    def _analyze_technical(self, fencer_actions: List[dict]) -> List[str]:
+    def _analyze_technical(self, fencer_actions: list[dict]) -> list[str]:
         feedback = []
         action_types = [a.get("type", "") for a in fencer_actions]
 
@@ -64,7 +65,7 @@ class CoachAgent:
             feedback.append("Good variety in technical actions. Continue practicing all attack types.")
         return feedback
 
-    def _analyze_strategic(self, fencer_actions: List[dict]) -> List[str]:
+    def _analyze_strategic(self, fencer_actions: list[dict]) -> list[str]:
         feedback = []
         targets = [a.get("target", "") for a in fencer_actions]
 
@@ -84,7 +85,7 @@ class CoachAgent:
             feedback.append("Good strategic awareness in target selection.")
         return feedback
 
-    def _analyze_tactical(self, fencer_actions: List[dict], referee_calls: List[str]) -> List[str]:
+    def _analyze_tactical(self, fencer_actions: list[dict], referee_calls: list[str]) -> list[str]:
         feedback = []
         action_types = [a.get("type", "") for a in fencer_actions]
 
@@ -111,7 +112,7 @@ class CoachAgent:
             feedback.append("Strong tactical execution. Your decision-making was solid.")
         return feedback
 
-    def _generate_recommendations(self, fencer_actions: List[dict], fencer_wins: int, opponent_wins: int) -> List[str]:
+    def _generate_recommendations(self, fencer_actions: list[dict], fencer_wins: int, opponent_wins: int) -> list[str]:
         recommendations = []
 
         if fencer_wins < opponent_wins:
@@ -193,8 +194,7 @@ class CoachAgent:
         ]
 
         # Include prior chat turns for conversational continuity
-        for turn in self.chat_history[-6:]:  # Last 3 exchanges (6 messages)
-            messages.append(turn)
+        messages.extend(self.chat_history[-6:])  # Last 3 exchanges (6 messages)
 
         messages.append({"role": "user", "content": question})
 
@@ -206,7 +206,7 @@ class CoachAgent:
                 max_tokens=800,
             )
             answer = response.choices[0].message.content.strip()
-        except Exception as e:
+        except (KeyError, ValueError, ConnectionError, TypeError) as e:
             logger.error(f"Coach chat LLM error: {e}")
             answer = (
                 "I'm having trouble connecting right now. "
@@ -238,8 +238,10 @@ class CoachAgent:
             return "No match data available yet."
 
         lines = [
-            f"Current score: You {score.get('fencer', 0)} - "
-            f"Opponent {score.get('opponent', 0)}",
+            (
+                f"Current score: You {score.get('fencer', 0)} - "
+                f"Opponent {score.get('opponent', 0)}"
+            ),
             f"Total exchanges: {len(exchange_history)}",
             "",
             "Recent exchanges:",
