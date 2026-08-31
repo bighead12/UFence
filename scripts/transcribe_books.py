@@ -1,9 +1,10 @@
 import os
-import time
 import sys
+import time
 from pathlib import Path
-from dotenv import load_dotenv
+
 import google.generativeai as genai
+from dotenv import load_dotenv
 
 # Setup environment
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -87,7 +88,7 @@ for pdf_path in pdf_files:
                         transcriptions.append(text)
                         break
                     print("Received empty text, retrying...")
-                except Exception as ex:
+                except (ValueError, RuntimeError, OSError) as ex:
                     print(f"Error during chunk generation (retry {retry+1}/{max_retries}): {ex}")
                     # If it's a rate limit error (429), wait longer
                     if "429" in str(ex) or "Quota exceeded" in str(ex) or "ResourceExhausted" in str(ex):
@@ -108,14 +109,14 @@ for pdf_path in pdf_files:
             f.write(full_transcription)
         print(f"SUCCESS! {txt_path.name} created successfully ({len(full_transcription)} characters).")
 
-    except Exception as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"\n[ERROR] Failed to transcribe {pdf_path.name}: {e}")
     finally:
         try:
             genai.delete_file(uploaded_file.name)
             print(f"Cleaned up remote file {uploaded_file.name} from Gemini API.")
-        except Exception:
-            pass
+        except (ValueError, RuntimeError, OSError):
+            pass  # Best-effort cleanup; ignore failures
 
 print("\n" + "=" * 60)
 print("=== Transcribe engine tasks completed successfully! ===")
