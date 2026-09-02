@@ -242,33 +242,9 @@ else:
                 unsafe_allow_html=True
             )
 
-            if crew.referee.exchange_history:
-                feedback = crew.coach.analyze_exchange(
-                    crew.referee.exchange_history,
-                    score
-                )
-
-                st.markdown("### 📋 Coach's Analysis")
-                st.info(f"**Summary:** {feedback['summary']}")
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("#### 🔧 Technical Feedback")
-                    for item in feedback['technical']:
-                        st.markdown(f"- {item}")
-
-                with col2:
-                    st.markdown("#### 🎯 Tactical Feedback")
-                    for item in feedback['tactical']:
-                        st.markdown(f"- {item}")
-
-                st.markdown("#### 📈 Strategic Insights")
-                for item in feedback['strategic']:
-                    st.markdown(f"- {item}")
-
-                st.markdown("#### 💡 Recommendations")
-                for rec in feedback['recommendations']:
-                    st.markdown(f"- {rec}")
+            st.info(
+                "📋 Switch to the **🏅 Coach** tab to view detailed post-match analysis."
+            )
 
             if st.button("Play Again", type="primary"):
                 result = crew.start_new_match()
@@ -276,6 +252,8 @@ else:
                 st.session_state.last_result = None
                 st.session_state.messages = []
                 st.session_state.coach_messages = []
+                st.session_state.selected_action = None
+                st.session_state.selected_target = "torso"
                 st.rerun()
 
         else:
@@ -371,6 +349,26 @@ else:
         render_history_panel(st.session_state.exchange_results)
 
     with tab3:
+        # Match-complete winner banner
+        if (
+            score["fencer"] >= WINNING_SCORE
+            or score["opponent"] >= WINNING_SCORE
+        ):
+            winner = (
+                "You" if score["fencer"] > score["opponent"] else "Opponent"
+            )
+            winner_color = (
+                "#3B82F6"
+                if score["fencer"] > score["opponent"]
+                else "#EF4444"
+            )
+            st.markdown(
+                f"<h2 style='color: {winner_color}; text-align: center;'>"
+                f"🏆 {winner} won the match {score['fencer']}-"
+                f"{score['opponent']}!</h2>",
+                unsafe_allow_html=True
+            )
+
         if crew.referee.exchange_history:
             feedback = crew.coach.analyze_exchange(
                 crew.referee.exchange_history,

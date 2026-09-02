@@ -20,7 +20,7 @@ class CoachAgent:
 
         fencer_wins = referee_calls.count("fencer")
         opponent_wins = referee_calls.count("opponent")
-        ties = referee_calls.count("both")
+        ties = referee_calls.count("simultaneous")
 
         feedback = {
             "summary": self._generate_summary(score, fencer_wins, opponent_wins),
@@ -99,7 +99,7 @@ class CoachAgent:
         if compound_count == 0 and len(fencer_actions) < 4:
             feedback.append("Consider using compound attacks to set up opportunities.")
 
-        simultaneous = referee_calls.count("both")
+        simultaneous = referee_calls.count("simultaneous")
         if simultaneous > len(referee_calls) * 0.3:
             feedback.append("Too many simultaneous hits. Improve your reaction time and distance control.")
 
