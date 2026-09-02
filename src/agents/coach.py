@@ -17,7 +17,7 @@ class CoachAgent:
 
         fencer_wins = referee_calls.count("fencer")
         opponent_wins = referee_calls.count("opponent")
-        ties = referee_calls.count("both")
+        ties = referee_calls.count("simultaneous")
 
         feedback = {
             "summary": self._generate_summary(score, fencer_wins, opponent_wins),

@@ -61,7 +61,7 @@ class TestRefereeAgent:
             {"type": "parry", "target": "torso"}
         )
 
-        assert result["call"] in ["fencer", "both"]
+        assert result["call"] in ["fencer", "simultaneous"]
 
     def test_score_updates(self):
         referee = RefereeAgent()
