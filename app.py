@@ -46,10 +46,11 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.info(
     "💡 **Google Gemini Mode Active**\n\n"
-    "This app now uses **Gemini 2.5 Flash** (Free Tier) to power the fencing "
-    "referee interpretation and Coach feedback agents! "
-    "This allows for fast, cloud-hosted intelligence without running local "
-    "GPU/Ollama servers."
+    "This app uses **Gemini 2.5 Flash** (Free Tier) for:\n"
+    "- **Natural language move input** — describe your fencing action in plain text\n"
+    "- **Coach chat** — ask your coach questions about fencing technique and strategy\n\n"
+    "The referee decisions are handled by the built-in rules engine. "
+    "No local GPU or Ollama server needed!"
 )
 
 
