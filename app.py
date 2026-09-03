@@ -7,7 +7,12 @@ import streamlit.components.v1 as components
 from src.crew.fencing_crew import FencingCrew
 from src.knowledge.ingest import get_ingestion_status, ingest_books
 from src.knowledge.retriever import BookRetriever
-from src.utils.config import WINNING_SCORE
+from src.utils.config import (
+    OPENROUTER_API_KEY,
+    OPENROUTER_MODEL,
+    OPENROUTER_MODELS,
+    WINNING_SCORE,
+)
 from src.visualization.animator import render_complete_animation
 from src.visualization.fencer_svg import render_fencer_arena
 from src.visualization.history import render_history_panel
@@ -68,16 +73,18 @@ def _execute_move(crew: FencingCrew, action: str, target: str) -> None:
                 )
                 components.html(animation_html, height=400)
 
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": assistant_msg,
-            "animation_html": animation_html,
-            "fencer_action": fencer_action,
-            "opponent_action": opponent_action,
-            "call": call,
-            "fencer_score": result.get("score", {}).get("fencer", 0),
-            "opponent_score": result.get("score", {}).get("opponent", 0),
-        })
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": assistant_msg,
+                "animation_html": animation_html,
+                "fencer_action": fencer_action,
+                "opponent_action": opponent_action,
+                "call": call,
+                "fencer_score": result.get("score", {}).get("fencer", 0),
+                "opponent_score": result.get("score", {}).get("opponent", 0),
+            }
+        )
         st.session_state.exchange_results.append(result)
         st.session_state.last_result = referee_call
 
@@ -115,46 +122,57 @@ def _execute_natural_language_move(crew: FencingCrew, prompt: str) -> None:
 st.set_page_config(
     page_title="UFence - Fencing Exchange Simulator",
     page_icon="🤺",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-# Sidebar for Gemini Configuration
+# Sidebar for OpenRouter Configuration
 st.sidebar.title("🤺 UFence Control Panel")
 st.sidebar.markdown("---")
 
-# Retrieve API Key from env if present
-env_key = os.getenv("GEMINI_API_KEY", "")
+# Set the API key from config in the environment for LiteLLM
+os.environ["OPENROUTER_API_KEY"] = OPENROUTER_API_KEY
+os.environ["OPENROUTER_MODEL"] = OPENROUTER_MODEL
 
-# Key input (hides character by default)
-api_key = st.sidebar.text_input(
-    "🔑 Google Gemini API Key",
-    value=env_key,
-    type="password",
-    help="Get a free key from Google AI Studio (aistudio.google.com)"
+# Model picker — persist the user's last selection across reruns
+if "openrouter_model" not in st.session_state:
+    st.session_state.openrouter_model = OPENROUTER_MODEL
+
+selected_model = st.sidebar.selectbox(
+    "Model",
+    OPENROUTER_MODELS,
+    index=(
+        OPENROUTER_MODELS.index(st.session_state.openrouter_model)
+        if st.session_state.openrouter_model in OPENROUTER_MODELS
+        else 0
+    ),
+    help="Choose the model OpenRouter uses for Coach Chat & intent parsing",
 )
 
-# If key is provided in UI, set it in environment for LiteLLM to use
-if api_key:
-    os.environ["GEMINI_API_KEY"] = api_key
-    st.sidebar.success("🟢 API Key Active")
+# Persist the selected model for next rerun
+st.session_state.openrouter_model = selected_model
+
+# Ensure the environment reflects the selected model
+os.environ["OPENROUTER_MODEL"] = selected_model
+
+if OPENROUTER_API_KEY:
+    st.sidebar.success(f"🟢 {selected_model} Active")
 else:
     st.sidebar.warning(
-        "🔴 Missing API Key. Enter a key to enable Coach Chat & "
+        "🔴 Missing API Key. Add it to `.env` to enable Coach Chat & "
         "Natural Language interpretation!"
     )
 
 st.sidebar.markdown("---")
 st.sidebar.info(
-    "💡 **Google Gemini Mode Active**\n\n"
-    "This app uses **Gemini 2.5 Flash** (Free Tier) for:\n"
-    "- **Natural language move input** — describe your fencing action in plain text\n"
-    "- **Coach chat** — ask your coach questions about fencing technique and strategy\n\n"
-    "The referee decisions are handled by the built-in rules engine. "
-    "No local GPU or Ollama server needed!"
+    f"💡 **OpenRouter Mode Active**\n\n"
+    f"Currently using **{selected_model}**. "
+    "Free models only — check openrouter.ai for details."
 )
 
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 @keyframes pulse {
     0% { transform: scale(1); }
@@ -162,7 +180,9 @@ st.markdown("""
     100% { transform: scale(1); }
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 if "crew" not in st.session_state:
     try:
@@ -218,28 +238,19 @@ else:
     tab1, tab2, tab3 = st.tabs(["🎯 Arena", "📜 History", "🏅 Coach"])
 
     with tab1:
-        if (
-            score["fencer"] >= WINNING_SCORE
-            or score["opponent"] >= WINNING_SCORE
-        ):
+        if score["fencer"] >= WINNING_SCORE or score["opponent"] >= WINNING_SCORE:
             st.divider()
             st.markdown("### 🏆 Match Complete!")
 
-            winner = (
-                "You"
-                if score["fencer"] > score["opponent"]
-                else "Opponent"
-            )
+            winner = "You" if score["fencer"] > score["opponent"] else "Opponent"
             winner_color = (
-                "#3B82F6"
-                if score["fencer"] > score["opponent"]
-                else "#EF4444"
+                "#3B82F6" if score["fencer"] > score["opponent"] else "#EF4444"
             )
             st.markdown(
                 f"<h2 style='color: {winner_color}; text-align: center;'>"
                 f"{winner} won the match {score['fencer']}-"
                 f"{score['opponent']}!</h2>",
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
             st.info(
@@ -266,7 +277,7 @@ else:
                 distance=distance,
                 opponent_action=opponent_intent.get("action"),
                 score=score,
-                last_result=st.session_state.get("last_result")
+                last_result=st.session_state.get("last_result"),
             )
 
             st.caption(
@@ -303,7 +314,12 @@ else:
                 is_selected = st.session_state.selected_action == action
                 button_type = "primary" if is_selected else "secondary"
                 with cols[col_idx]:
-                    if st.button(label, key=f"action_{action}", type=button_type, use_container_width=True):
+                    if st.button(
+                        label,
+                        key=f"action_{action}",
+                        type=button_type,
+                        use_container_width=True,
+                    ):
                         st.session_state.selected_action = action
                         st.rerun()
 
@@ -315,15 +331,29 @@ else:
                 button_type = "primary" if is_selected else "secondary"
                 label = target.title()
                 with target_cols[i]:
-                    if st.button(label, key=f"target_{target}", type=button_type, use_container_width=True):
+                    if st.button(
+                        label,
+                        key=f"target_{target}",
+                        type=button_type,
+                        use_container_width=True,
+                    ):
                         st.session_state.selected_target = target
                         st.rerun()
 
             # Execute / Clear buttons
             col_exec, col_clear = st.columns([1, 1])
             with col_exec:
-                if st.button("🎯 Execute Move", type="primary", disabled=st.session_state.selected_action is None, use_container_width=True):
-                    _execute_move(crew, st.session_state.selected_action, st.session_state.selected_target)
+                if st.button(
+                    "🎯 Execute Move",
+                    type="primary",
+                    disabled=st.session_state.selected_action is None,
+                    use_container_width=True,
+                ):
+                    _execute_move(
+                        crew,
+                        st.session_state.selected_action,
+                        st.session_state.selected_target,
+                    )
                     st.rerun()
 
             with col_clear:
@@ -350,29 +380,21 @@ else:
 
     with tab3:
         # Match-complete winner banner
-        if (
-            score["fencer"] >= WINNING_SCORE
-            or score["opponent"] >= WINNING_SCORE
-        ):
-            winner = (
-                "You" if score["fencer"] > score["opponent"] else "Opponent"
-            )
+        if score["fencer"] >= WINNING_SCORE or score["opponent"] >= WINNING_SCORE:
+            winner = "You" if score["fencer"] > score["opponent"] else "Opponent"
             winner_color = (
-                "#3B82F6"
-                if score["fencer"] > score["opponent"]
-                else "#EF4444"
+                "#3B82F6" if score["fencer"] > score["opponent"] else "#EF4444"
             )
             st.markdown(
                 f"<h2 style='color: {winner_color}; text-align: center;'>"
                 f"🏆 {winner} won the match {score['fencer']}-"
                 f"{score['opponent']}!</h2>",
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
         if crew.referee.exchange_history:
             feedback = crew.coach.analyze_exchange(
-                crew.referee.exchange_history,
-                crew.referee.score
+                crew.referee.exchange_history, crew.referee.score
             )
 
             st.markdown("### 📋 Coach's Analysis")
@@ -381,32 +403,32 @@ else:
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("#### 🔧 Technical")
-                for item in feedback['technical']:
+                for item in feedback["technical"]:
                     st.markdown(f"- {item}")
 
                 st.markdown("#### 📈 Strategic")
-                for item in feedback['strategic']:
+                for item in feedback["strategic"]:
                     st.markdown(f"- {item}")
 
             with col2:
                 st.markdown("#### 🎯 Tactical")
-                for item in feedback['tactical']:
+                for item in feedback["tactical"]:
                     st.markdown(f"- {item}")
 
                 st.markdown("#### 💡 Recommendations")
-                for rec in feedback['recommendations']:
+                for rec in feedback["recommendations"]:
                     st.markdown(f"- {rec}")
 
-            if feedback.get('score_analysis'):
+            if feedback.get("score_analysis"):
                 st.markdown("### 📊 Performance")
-                sa = feedback['score_analysis']
+                sa = feedback["score_analysis"]
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Your Points", sa.get('fencer_points', 0))
+                    st.metric("Your Points", sa.get("fencer_points", 0))
                 with col2:
-                    st.metric("Opp Points", sa.get('opponent_points', 0))
+                    st.metric("Opp Points", sa.get("opponent_points", 0))
                 with col3:
-                    st.metric("Ties", sa.get('ties', 0))
+                    st.metric("Ties", sa.get("ties", 0))
         else:
             st.info("Complete some exchanges to get coach feedback!")
 
@@ -437,9 +459,7 @@ else:
                 "💡 You can initialize the Coach's knowledge base using the "
                 "built-in Fencing Rules Handbook!"
             )
-            if st.button(
-                "📥 Initialize Rules Knowledge Base", type="primary"
-            ):
+            if st.button("📥 Initialize Rules Knowledge Base", type="primary"):
                 with st.spinner("Initializing rules knowledge base..."):
                     try:
                         collection = ingest_books()
@@ -461,13 +481,9 @@ else:
                 "a rules-fallback ingestion to ensure a working coach "
                 "experience)*"
             )
-            if st.button(
-                "📥 Ingest Books & Rules into Knowledge Base",
-                type="primary"
-            ):
+            if st.button("📥 Ingest Books & Rules into Knowledge Base", type="primary"):
                 with st.spinner(
-                    "Ingesting knowledge base... This may take a minute on "
-                    "first run."
+                    "Ingesting knowledge base... This may take a minute on first run."
                 ):
                     try:
                         collection = ingest_books()
@@ -484,7 +500,7 @@ else:
             with st.expander(
                 f"📚 Knowledge Base: {status['total_chunks']} chunks from "
                 f"{len(status['ingested_sources'])} source(s)",
-                expanded=False
+                expanded=False,
             ):
                 for src in status["ingested_sources"]:
                     st.markdown(f"- ✅ {src}")
@@ -505,28 +521,21 @@ else:
             retriever = st.session_state.book_retriever
 
             if not retriever.is_ready:
-                st.warning(
-                    "Knowledge base is not ready. Try re-ingesting the books."
-                )
+                st.warning("Knowledge base is not ready. Try re-ingesting the books.")
             else:
                 # Display chat history
                 for msg in st.session_state.coach_messages:
                     with st.chat_message(
-                        msg["role"],
-                        avatar="🏋️" if msg["role"] == "user" else "🧑‍🏫"
+                        msg["role"], avatar="🏋️" if msg["role"] == "user" else "🧑‍🏫"
                     ):
                         st.markdown(msg["content"])
                         if msg.get("sources"):
                             with st.expander("📚 Sources"):
                                 for s in msg["sources"]:
                                     page_info = (
-                                        f", p. {s['page']}"
-                                        if s.get('page')
-                                        else ""
+                                        f", p. {s['page']}" if s.get("page") else ""
                                     )
-                                    st.markdown(
-                                        f"- *{s['source']}*{page_info}"
-                                    )
+                                    st.markdown(f"- *{s['source']}*{page_info}")
 
                 # If the last message is from user, generate assistant
                 # response
@@ -534,50 +543,40 @@ else:
                     st.session_state.coach_messages
                     and st.session_state.coach_messages[-1]["role"] == "user"
                 ):
-                    user_msg = (
-                        st.session_state.coach_messages[-1]["content"]
-                    )
-                    with st.chat_message("assistant", avatar="🧑‍🏫"), st.spinner("Coach is thinking..."):
-                            try:
-                                result = crew.coach_chat(
-                                    user_msg, retriever
-                                )
-                                answer = result["answer"]
-                                sources = result["sources"]
+                    user_msg = st.session_state.coach_messages[-1]["content"]
+                    with (
+                        st.chat_message("assistant", avatar="🧑‍🏫"),
+                        st.spinner("Coach is thinking..."),
+                    ):
+                        try:
+                            result = crew.coach_chat(user_msg, retriever)
+                            answer = result["answer"]
+                            sources = result["sources"]
 
-                                st.markdown(answer)
-                                if sources:
-                                    with st.expander("📚 Sources"):
-                                        for s in sources:
-                                            page_info = (
-                                                f", p. {s['page']}"
-                                                if s.get('page')
-                                                else ""
-                                            )
-                                            st.markdown(
-                                                f"- *{s['source']}*"
-                                                f"{page_info}"
-                                            )
+                            st.markdown(answer)
+                            if sources:
+                                with st.expander("📚 Sources"):
+                                    for s in sources:
+                                        page_info = (
+                                            f", p. {s['page']}" if s.get("page") else ""
+                                        )
+                                        st.markdown(f"- *{s['source']}*{page_info}")
 
-                                st.session_state.coach_messages.append({
+                            st.session_state.coach_messages.append(
+                                {
                                     "role": "assistant",
                                     "content": answer,
                                     "sources": sources,
-                                })
-                                # Clear success banner on first question
-                                if (
-                                    "show_ingestion_success"
-                                    in st.session_state
-                                ):
-                                    del (
-                                        st.session_state
-                                        .show_ingestion_success
-                                    )
-                                st.rerun()
-                            except (ValueError, RuntimeError) as e:
-                                st.error(f"Error: {e}")
-                                with st.expander("Debug"):
-                                    st.code(traceback.format_exc())
+                                }
+                            )
+                            # Clear success banner on first question
+                            if "show_ingestion_success" in st.session_state:
+                                del st.session_state.show_ingestion_success
+                            st.rerun()
+                        except (ValueError, RuntimeError) as e:
+                            st.error(f"Error: {e}")
+                            with st.expander("Debug"):
+                                st.code(traceback.format_exc())
 
                 # Chat input using form to bypass Streamlit single
                 # st.chat_input restriction
@@ -587,10 +586,9 @@ else:
                         coach_question = st.text_input(
                             "Ask your coach a question:",
                             placeholder=(
-                                "e.g. How can I defend better "
-                                "against fleche?"
+                                "e.g. How can I defend better against fleche?"
                             ),
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
                         )
                     with col_btn:
                         submit_button = st.form_submit_button(
@@ -598,15 +596,17 @@ else:
                         )
 
                 if submit_button and coach_question:
-                    st.session_state.coach_messages.append({
-                        "role": "user",
-                        "content": coach_question,
-                    })
+                    st.session_state.coach_messages.append(
+                        {
+                            "role": "user",
+                            "content": coach_question,
+                        }
+                    )
                     st.rerun()
 
 st.markdown("---")
 st.markdown(
     "<p style='text-align: center; color: gray;'>"
     "UFence - AI-Powered Fencing Exchange Simulator</p>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
