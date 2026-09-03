@@ -1,3 +1,4 @@
+import json
 import random
 
 from src.agents.coach import CoachAgent
@@ -107,9 +108,9 @@ class FencingCrew:
         try:
             import litellm
 
-            from src.utils.config import GEMINI_MODEL
+            from src.utils.config import OPENROUTER_MODEL
             response = litellm.completion(
-                model=GEMINI_MODEL,
+                model=OPENROUTER_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=50,
             )
@@ -117,11 +118,10 @@ class FencingCrew:
             if content.startswith("```"):
                 content = content.split("```")[1]
                 content = content.removeprefix("json")
-            import json
             result = json.loads(content)
             action = result.get("action", "direct_attack")
             target = result.get("target", "torso")
-        except (json.JSONDecodeError, KeyError, ValueError):
+        except (json.JSONDecodeError, KeyError, ValueError, ConnectionError, TypeError):
             action = "direct_attack"
             target = "torso"
 

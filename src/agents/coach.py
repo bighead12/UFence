@@ -153,7 +153,7 @@ class CoachAgent:
         - sources: List of source references used
         """
         from src.knowledge.retriever import BookRetriever
-        from src.utils.config import GEMINI_MODEL
+        from src.utils.config import OPENROUTER_MODEL
 
         # Format retrieved book passages
         retriever = BookRetriever()
@@ -201,7 +201,7 @@ class CoachAgent:
         # Call LLM
         try:
             response = litellm.completion(
-                model=GEMINI_MODEL,
+                model=OPENROUTER_MODEL,
                 messages=messages,
                 max_tokens=800,
             )
