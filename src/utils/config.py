@@ -10,11 +10,11 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 RULES_FILE = CONFIG_DIR / "fencing_rules.json"
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/meta-llama/llama-3.1-8b-instruct:free")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/thinkingmachines/inkling:free")
 
 # Curated OpenRouter free models for the sidebar dropdown
 OPENROUTER_MODELS = [
-    "openrouter/meta-llama/llama-3.1-8b-instruct:free",
+    "openrouter/thinkingmachines/inkling:free",
 ]
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 WINNING_SCORE = int(os.getenv("WINNING_SCORE", "5"))
