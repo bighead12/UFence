@@ -49,10 +49,13 @@ for pdf_path in pdf_files:
         if uploaded_file.state.name == "FAILED":
             raise ValueError(f"File processing failed: {uploaded_file.error.message}")
 
-        print(f"\n[2/4] File is ready for processing. State: {uploaded_file.state.name}")
+        print(
+            f"\n[2/4] File is ready for processing. State: {uploaded_file.state.name}"
+        )
 
         # Get total page count
         import fitz
+
         doc = fitz.open(str(pdf_path))
         page_count = doc.page_count
         doc.close()
@@ -61,23 +64,27 @@ for pdf_path in pdf_files:
         # Transcribe in page ranges of 10 pages to prevent 8192-token output truncation
         transcriptions = []
         page_ranges = []
-        
+
         step = 10
         for i in range(1, page_count + 1, step):
             end = min(i + step - 1, page_count)
             page_ranges.append((i, end))
 
-        print(f"[3/4] Transcribing book in {len(page_ranges)} chunks to guarantee full coverage...")
-        
+        print(
+            f"[3/4] Transcribing book in {len(page_ranges)} chunks to guarantee full coverage..."
+        )
+
         for idx, (start, end) in enumerate(page_ranges, 1):
-            print(f" -> Processing pages {start} to {end} (Chunk {idx}/{len(page_ranges)})...")
+            print(
+                f" -> Processing pages {start} to {end} (Chunk {idx}/{len(page_ranges)})..."
+            )
             prompt = (
                 f"You are a professional book transcriber. Transcribe pages {start} through {end} "
                 "of this scanned fencing guidebook in full detail. Do not summarize or skip anything. "
                 "Output the exact textual contents of the pages in clean markdown. Format each page "
                 f"with a clear marker like '[Page N]' before its text starts."
             )
-            
+
             # Robust retry loop with rate limit backoff for Free Tier
             max_retries = 6
             for retry in range(max_retries):
@@ -89,16 +96,24 @@ for pdf_path in pdf_files:
                         break
                     print("Received empty text, retrying...")
                 except (ValueError, RuntimeError, OSError) as ex:
-                    print(f"Error during chunk generation (retry {retry+1}/{max_retries}): {ex}")
+                    print(
+                        f"Error during chunk generation (retry {retry + 1}/{max_retries}): {ex}"
+                    )
                     # If it's a rate limit error (429), wait longer
-                    if "429" in str(ex) or "Quota exceeded" in str(ex) or "ResourceExhausted" in str(ex):
+                    if (
+                        "429" in str(ex)
+                        or "Quota exceeded" in str(ex)
+                        or "ResourceExhausted" in str(ex)
+                    ):
                         print("Rate limit hit! Sleeping 60 seconds before retrying...")
                         time.sleep(60)
                     else:
                         time.sleep(5)
             else:
-                raise RuntimeError(f"Failed to transcribe page range {start}-{end} after multiple retries.")
-            
+                raise RuntimeError(
+                    f"Failed to transcribe page range {start}-{end} after multiple retries."
+                )
+
             # Generous sleep to stay well within Google AI Studio's free tier limits (15 RPM / 10 RPM)
             time.sleep(8)
 
@@ -107,7 +122,9 @@ for pdf_path in pdf_files:
         print(f"\n[4/4] Writing transcription to: {txt_path.name}...")
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(full_transcription)
-        print(f"SUCCESS! {txt_path.name} created successfully ({len(full_transcription)} characters).")
+        print(
+            f"SUCCESS! {txt_path.name} created successfully ({len(full_transcription)} characters)."
+        )
 
     except (ValueError, RuntimeError, OSError) as e:
         print(f"\n[ERROR] Failed to transcribe {pdf_path.name}: {e}")

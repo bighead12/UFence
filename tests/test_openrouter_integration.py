@@ -27,7 +27,7 @@ class TestOpenRouterConfig:
 
     def test_model_list_uses_known_providers(self):
         providers = {m.split("/")[0] for m in OPENROUTER_MODELS}
-        # Free-tier models are from meta-llama; verify at least one provider is present
+        # Free-tier models from OpenRouter; verify at least one provider is present
         assert len(providers) >= 1
 
     def test_default_model_is_set(self):

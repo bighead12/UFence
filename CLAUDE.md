@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Purpose | Command |
 |---|---|
 | Install dependencies | `pip install -r requirements.txt` |
-| Install Ollama and pull model | `ollama pull llama3.2` |
+| Set OpenRouter API key | `echo "OPENROUTER_API_KEY=sk-or-..." >> .env` (or paste in app sidebar) |
 | Start the application | `streamlit run app.py` |
 | Run tests | `pytest` |
 | Lint code | `ruff check .` |
@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-UFence is an AI‑powered fencing exchange simulation built with **CrewAI** and **Ollama**. The system coordinates four role‑based agents that interact through a Streamlit UI:
+UFence is an AI‑powered fencing exchange simulation built with **CrewAI** and **OpenRouter**. The system coordinates four role‑based agents that interact through a Streamlit UI:
 
 - **Fencer** – the user‑controlled agent that selects actions.
 - **Opponent** – an adaptive AI opponent that learns from patterns.
@@ -56,12 +56,13 @@ ufence/
 - **Format the code**: `ruff format .` — apply consistent formatting.
 - **Install/upgrade dependencies**: `pip install -r requirements.txt` (dev extras include `black`, `ruff`, `mypy`).
 - **Start the app**: `streamlit run app.py` — opens the UI at `http://localhost:8501`.
-- **Pull the required Ollama model**: `ollama pull llama3.2` — needed for the LLM‑backed agents.
+- **OpenRouter API key**: sign up at openrouter.ai/keys and set `OPENROUTER_API_KEY` in `.env` (or paste it in the app's sidebar). Needed for natural-language intent parsing and Coach Chat.
 
 ## Key Files to Know
 
-- `app.py` — the Streamlit app; changing UI flow or pages goes here.
-- `src/agents/*.py` — the four AI agents; each implements a `crewai` agent definition.
-- `src/crew/fencing_crew.py` — ties the agents together into a crew and defines the task flow.
+- `app.py` — the Streamlit app; changing UI flow or pages goes here. The sidebar handles OpenRouter config (API key + model picker).
+- `src/agents/*.py` — the four agents. Only `coach.py` calls the LLM (via litellm) for Coach Chat RAG answers.
+- `src/crew/fencing_crew.py` — ties the agents together; `interpret_user_intent()` calls the LLM for natural-language move parsing.
+- `src/utils/config.py` — holds `OPENROUTER_MODEL` and `OPENROUTER_MODELS` (the sidebar dropdown list).
 - `config/fencing_rules.json` — the rule set the referee uses to score touches.
 - `tests/` — pytest suite; adding a new test usually means adding a file or function here.

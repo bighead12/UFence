@@ -88,7 +88,7 @@ class OpponentAgent:
             "fleche",
             "parry_and_riposte",
             "counter_attack",
-            "remise"
+            "remise",
         ]
 
     def reset(self):

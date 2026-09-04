@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Commands Reference</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #0d1117; color: #c9d1d9; }
+  h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+  h2 { color: #f0f6fc; margin-top: 30px; }
+  .cmd { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px 16px; margin: 8px 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; overflow-x: auto; }
+  .cmd .prompt { color: #8b949e; }
+  .cmd .keyword { color: #ff7b72; }
+  .cmd .string { color: #a5d6ff; }
+  .cmd .comment { color: #8b949e; font-style: italic; }
+  .label { display: inline-block; background: #1f6feb; color: #fff; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; margin-right: 8px; text-transform: uppercase; }
+  .label.setup { background: #238636; }
+  .label.branch { background: #9e6a03; }
+  .label.remote { background: #8957e5; }
+  .label.sync { background: #d29922; }
+  .label.inspect { background: #3b82f6; }
+  .desc { color: #8b949e; font-size: 14px; margin: 4px 0 12px 0; }
+  .token-warn { background: #3d1f00; border: 1px solid #d29922; border-radius: 6px; padding: 12px 16px; margin: 20px 0; font-size: 14px; }
+  .token-warn strong { color: #d29922; }
+</style>
+</head>
+<body>
+
+<h1>Git Commands Reference</h1>
+<p style="color: #8b949e;">Compiled from session — 9 May 2026</p>
+
+<div class="token-warn">
+  <strong>⚠️ Token Security:</strong> Never hardcode tokens in URLs or commit them. Use <code>git remote set-url</code> with a token only temporarily, then rotate the token afterward. Prefer SSH keys or credential helpers for persistent auth.
+</div>
+
+<h2>Clone &amp; Config</h2>
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git clone</span> <span class="string">https://github.com/bighead12/UFence.git</span></div>
+<div class="desc">Download the repo to your local machine.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git config</span> user.name <span class="string">"agent6605"</span></div>
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git config</span> user.email <span class="string">"agent6605@users.noreply.github.com"</span></div>
+<div class="desc">Set local identity for commits (omit <code>--global</code> to scope to current repo only).</div>
+
+<h2>Status &amp; Inspection</h2>
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git status</span></div>
+<div class="desc">Show modified, staged, and untracked files.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git diff</span></div>
+<div class="desc">Show unstaged changes line-by-line.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git log</span> --oneline -5</div>
+<div class="desc">Show last 5 commits in compact format.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git remote</span> -v</div>
+<div class="desc">List remote URLs (fetch &amp; push).</div>
+
+<h2>Branch &amp; Commit</h2>
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git checkout -b</span> <span class="string">feature/chat-interface</span></div>
+<div class="desc">Create and switch to a new feature branch.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git add</span> app.py config/fencing_rules.json src/crew/fencing_crew.py src/visualization/animator.py</div>
+<div class="desc">Stage specific files for commit (exclude <code>streamlit.log</code> and other artifacts).</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git commit -m</span> <span class="string">"Replace dropdown UI with chat-based interface using LLM intent interpretation"</span></div>
+<div class="desc">Commit staged changes with a descriptive message.</div>
+
+<h2>Remote &amp; Push</h2>
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git remote set-url origin</span> <span class="string">https://github.com/agent6605:TOKEN@github.com/bighead12/UFence.git</span></div>
+<div class="desc">Temporarily embed a token in the remote URL for authenticated push.</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git push -u origin</span> <span class="string">feature/chat-interface</span></div>
+<div class="desc">Push local branch to remote and set upstream tracking (<code>-u</code>).</div>
+
+<div class="cmd"><span class="prompt">$</span> <span class="keyword">git remote set-url origin</span> <span class="string">https://github.com/bighead12/UFence.git</span></div>
+<div class="desc">Remove token from remote URL after push completes.</div>
+
+<h2>Quick Reference</h2>
+<table style="width:100%; border-collapse: collapse; font-size: 14px; margin-top: 10px;">
+  <tr style="border-bottom: 1px solid #30363d;">
+    <th style="text-align:left; padding: 8px; color: #8b949e;">Command</th>
+    <th style="text-align:left; padding: 8px; color: #8b949e;">What it does</th>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git clone &lt;url&gt;</td>
+    <td style="padding: 8px;">Download a repo</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git checkout -b &lt;branch&gt;</td>
+    <td style="padding: 8px;">Create &amp; switch to new branch</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git add &lt;file&gt;</td>
+    <td style="padding: 8px;">Stage changes for commit</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git commit -m "msg"</td>
+    <td style="padding: 8px;">Commit staged changes</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git push -u origin &lt;branch&gt;</td>
+    <td style="padding: 8px;">Push branch to remote (first time)</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git push</td>
+    <td style="padding: 8px;">Push commits (upstream set)</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git remote -v</td>
+    <td style="padding: 8px;">Show remote URLs</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git remote set-url origin &lt;url&gt;</td>
+    <td style="padding: 8px;">Change remote URL</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git status</td>
+    <td style="padding: 8px;">Check working tree state</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git diff</td>
+    <td style="padding: 8px;">View unstaged changes</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #21262d;">
+    <td style="padding: 8px; font-family: monospace;">git log --oneline -N</td>
+    <td style="padding: 8px;">Show last N commits (one line each)</td>
+  </tr>
+</table>
+
+</body>
+</html>

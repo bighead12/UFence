@@ -57,8 +57,7 @@ class TestRefereeAgent:
     def test_judge_action_fencer_priority(self):
         referee = RefereeAgent()
         result = referee.judge_action(
-            {"type": "fleche", "target": "torso"},
-            {"type": "parry", "target": "torso"}
+            {"type": "fleche", "target": "torso"}, {"type": "parry", "target": "torso"}
         )
 
         assert result["call"] in ["fencer", "both"]
@@ -67,7 +66,7 @@ class TestRefereeAgent:
         referee = RefereeAgent()
         referee.judge_action(
             {"type": "direct_attack", "target": "torso"},
-            {"type": "counter_attack", "target": "torso"}
+            {"type": "counter_attack", "target": "torso"},
         )
 
         assert "fencer" in referee.score
@@ -91,7 +90,7 @@ class TestCoachAgent:
             {
                 "fencer_action": {"type": "direct_attack", "target": "torso"},
                 "opponent_action": {"type": "counter_attack", "target": "shoulders"},
-                "result": {"call": "fencer", "fencer_score": 1, "opponent_score": 0}
+                "result": {"call": "fencer", "fencer_score": 1, "opponent_score": 0},
             }
         ]
         score = {"fencer": 1, "opponent": 0}

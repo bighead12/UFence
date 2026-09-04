@@ -57,15 +57,17 @@ class RefereeAgent:
             "opponent_score": opponent_score,
             "score": self.score.copy(),
             "reason": self._get_call_reason(call, fencer_type, opponent_type),
-            "is_match_over": self._is_match_over()
+            "is_match_over": self._is_match_over(),
         }
 
         self.current_call = result
-        self.exchange_history.append({
-            "fencer_action": fencer_action,
-            "opponent_action": opponent_action,
-            "result": result
-        })
+        self.exchange_history.append(
+            {
+                "fencer_action": fencer_action,
+                "opponent_action": opponent_action,
+                "result": result,
+            }
+        )
 
         logger.info(f"Referee call: {call} - Score: {self.score}")
         return result
@@ -100,8 +102,16 @@ class RefereeAgent:
 
         # Both priority - check action priority order
         if fencer_is_priority and opponent_is_priority:
-            fencer_idx = priority_actions.index(fencer_type_norm) if fencer_type_norm in priority_actions else 999
-            opponent_idx = priority_actions.index(opponent_type_norm) if opponent_type_norm in priority_actions else 999
+            fencer_idx = (
+                priority_actions.index(fencer_type_norm)
+                if fencer_type_norm in priority_actions
+                else 999
+            )
+            opponent_idx = (
+                priority_actions.index(opponent_type_norm)
+                if opponent_type_norm in priority_actions
+                else 999
+            )
             if fencer_idx < opponent_idx:
                 return "fencer"
             elif opponent_idx < fencer_idx:
@@ -111,8 +121,16 @@ class RefereeAgent:
 
         # Both secondary - compare indices
         if fencer_is_secondary and opponent_is_secondary:
-            fencer_idx = secondary_actions.index(fencer_type_norm) if fencer_type_norm in secondary_actions else 999
-            opponent_idx = secondary_actions.index(opponent_type_norm) if opponent_type_norm in secondary_actions else 999
+            fencer_idx = (
+                secondary_actions.index(fencer_type_norm)
+                if fencer_type_norm in secondary_actions
+                else 999
+            )
+            opponent_idx = (
+                secondary_actions.index(opponent_type_norm)
+                if opponent_type_norm in secondary_actions
+                else 999
+            )
             if fencer_idx < opponent_idx:
                 return "fencer"
             elif opponent_idx < fencer_idx:
@@ -131,13 +149,17 @@ class RefereeAgent:
         reasons = {
             "fencer": f"Fencer's {fencer_type} has priority over opponent's {opponent_type}",
             "opponent": f"Opponent's {opponent_type} has priority over fencer's {fencer_type}",
-            "simultaneous": "Simultaneous actions - no touch awarded"
+            "simultaneous": "Simultaneous actions - no touch awarded",
         }
         return reasons.get(call, "Unable to determine")
 
     def _is_match_over(self) -> bool:
         from src.utils.config import WINNING_SCORE
-        return self.score["fencer"] >= WINNING_SCORE or self.score["opponent"] >= WINNING_SCORE
+
+        return (
+            self.score["fencer"] >= WINNING_SCORE
+            or self.score["opponent"] >= WINNING_SCORE
+        )
 
     def get_halt_command(self) -> str:
         commands = self.rules["referee_commands"]["halts"]
@@ -145,6 +167,8 @@ class RefereeAgent:
 
     def get_match_result(self) -> dict:
         return {
-            "winner": "fencer" if self.score["fencer"] > self.score["opponent"] else "opponent",
-            "final_score": self.score.copy()
+            "winner": "fencer"
+            if self.score["fencer"] > self.score["opponent"]
+            else "opponent",
+            "final_score": self.score.copy(),
         }

@@ -11,7 +11,7 @@ class FencerAgent:
         action = {
             "type": action_type,
             "target": target or "torso",
-            "side": "right" if not self.action_history else self._get_opposite_side()
+            "side": "right" if not self.action_history else self._get_opposite_side(),
         }
         self.action_history.append(action)
         logger.info(f"Fencer executed: {action}")
@@ -30,7 +30,7 @@ class FencerAgent:
             "parry_and_riposte",
             "counter_attack",
             "remise",
-            "prise_de_fer"
+            "prise_de_fer",
         ]
 
     def get_valid_targets(self) -> list:
