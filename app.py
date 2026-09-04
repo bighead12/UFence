@@ -117,7 +117,7 @@ def _execute_natural_language_move(crew: FencingCrew, prompt: str) -> None:
             action, target = crew.interpret_user_intent(prompt)
             _execute_move(crew, action, target)
 
-    except Exception as e:
+    except (ValueError, RuntimeError, KeyError) as e:
         st.error(f"Error interpreting move: {e}")
         with st.expander("Debug"):
             st.code(traceback.format_exc())

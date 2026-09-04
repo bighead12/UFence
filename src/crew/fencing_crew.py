@@ -126,7 +126,7 @@ class FencingCrew:
             result = json.loads(content)
             action = result.get("action", "direct_attack")
             target = result.get("target", "torso")
-        except Exception as e:
+        except (json.JSONDecodeError, KeyError, ValueError, ConnectionError, TypeError) as e:
             # LLM call or JSON parsing failed — fall back to defaults
             # (free models are unreliable, so this is common).
             logger.warning(
