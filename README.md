@@ -1,6 +1,6 @@
 # UFence - Fencing Exchange Simulator
 
-AI-powered fencing exchange simulation with role-based agents using CrewAI and Ollama.
+AI-powered fencing exchange simulation with role-based agents using CrewAI and OpenRouter.
 
 ## Overview
 
@@ -13,7 +13,7 @@ UFence simulates a complete fencing match with three distinct AI agents:
 ## Requirements
 
 - Python 3.10+
-- Ollama installed with llama3.2 model
+- An [OpenRouter](https://openrouter.ai) API key (sign up free at openrouter.ai/keys)
 - See `requirements.txt` for Python dependencies
 
 ## Installation
@@ -34,17 +34,32 @@ source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Install Ollama and pull the model
-# (Follow instructions at https://ollama.ai)
-ollama pull llama3.2
 ```
+
+## API Key Setup
+
+Sign up at [openrouter.ai/keys](https://openrouter.ai/keys), then either:
+
+```bash
+# Option A: put it in your environment / .env file
+echo "OPENROUTER_API_KEY=sk-or-..." > .env
+```
+
+or paste the key into the **🔑 OpenRouter API Key** field in the app's
+sidebar. You can also pick a different model from the sidebar dropdown —
+OpenRouter gives you one key for Anthropic, Google, OpenAI, Meta, and many
+more. Free models (e.g. `meta-llama/llama-3.1-8b-instruct:free`) are
+available with no billing required.
 
 ## Running the Application
 
 ```bash
 streamlit run app.py
 ```
+
+> ℹ️ The Arena, action buttons, scoring, history, and post-match analysis all
+> work **without** an API key — only natural-language intent parsing and the
+> RAG-backed Coach Chat need OpenRouter.
 
 ## How to Play
 
