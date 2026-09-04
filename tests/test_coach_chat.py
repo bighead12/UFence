@@ -20,6 +20,7 @@ from src.knowledge.retriever import BookRetriever
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_text():
     """A block of sample fencing text for testing chunking."""
@@ -28,7 +29,8 @@ def sample_text():
         "Fencing is a group of three related combat sports. "
         "The three disciplines in modern fencing are the foil, the épée, "
         "and the sabre. Each discipline uses a different kind of blade "
-        "and has different rules. " * 20
+        "and has different rules. "
+        * 20
         + "\n[Page 2]\n"
         + "The right of way rule is fundamental in foil fencing. "
         "It determines which fencer scores a touch when both fencers "
@@ -47,7 +49,11 @@ def mock_exchange_history():
     """Sample exchange history for testing."""
     return [
         {
-            "fencer_action": {"type": "direct_attack", "target": "torso", "side": "right"},
+            "fencer_action": {
+                "type": "direct_attack",
+                "target": "torso",
+                "side": "right",
+            },
             "opponent_action": {"type": "parry_and_riposte", "target": "torso"},
             "result": {
                 "call": "opponent",
@@ -72,6 +78,7 @@ def mock_exchange_history():
 # ---------------------------------------------------------------------------
 # Task 2 tests: Ingestion
 # ---------------------------------------------------------------------------
+
 
 class TestChunkText:
     def test_basic_chunking(self, sample_text):
@@ -119,6 +126,7 @@ class TestIngestionStatus:
 # Task 3 tests: Retriever
 # ---------------------------------------------------------------------------
 
+
 class TestBookRetriever:
     def test_not_ready_when_no_vectorstore(self, tmp_path):
         retriever = BookRetriever(
@@ -143,7 +151,13 @@ class TestBookRetriever:
     def test_format_passages_with_data(self):
         retriever = BookRetriever()
         passages = [
-            {"text": "Sample passage text", "source": "book.pdf", "page": 42, "chunk_index": 0, "distance": 0.5},
+            {
+                "text": "Sample passage text",
+                "source": "book.pdf",
+                "page": 42,
+                "chunk_index": 0,
+                "distance": 0.5,
+            },
         ]
         formatted = retriever.format_passages_for_prompt(passages)
         assert "book.pdf" in formatted
@@ -154,6 +168,7 @@ class TestBookRetriever:
 # ---------------------------------------------------------------------------
 # Task 4 tests: Coach Chat
 # ---------------------------------------------------------------------------
+
 
 class TestCoachChat:
     def test_build_match_context_no_history(self, coach):
@@ -178,7 +193,13 @@ class TestCoachChat:
         mock_litellm.completion.return_value = mock_response
 
         passages = [
-            {"text": "Parry technique info", "source": "foil_guide.pdf", "page": 10, "chunk_index": 3, "distance": 0.2},
+            {
+                "text": "Parry technique info",
+                "source": "foil_guide.pdf",
+                "page": 10,
+                "chunk_index": 3,
+                "distance": 0.2,
+            },
         ]
 
         result = coach.chat(

@@ -60,9 +60,7 @@ class BookRetriever:
                 return
 
             self._ready = True
-            logger.info(
-                f"BookRetriever ready with {count} documents"
-            )
+            logger.info(f"BookRetriever ready with {count} documents")
         except (chromadb.errors.ChromaError, OSError, ValueError) as e:
             logger.error(f"Failed to load vectorstore: {e}")
 
@@ -80,9 +78,7 @@ class BookRetriever:
             return self._collection.count()
         return 0
 
-    def retrieve(
-        self, query: str, top_k: int = RAG_TOP_K
-    ) -> list[dict]:
+    def retrieve(self, query: str, top_k: int = RAG_TOP_K) -> list[dict]:
         """
         Retrieve the top-k most relevant passages for a query.
 
@@ -114,17 +110,18 @@ class BookRetriever:
                         results["distances"][0][i] if results["distances"] else 0.0
                     )
 
-                    passages.append({
-                        "text": doc,
-                        "source": meta.get("source", "Unknown"),
-                        "page": meta.get("page", 0),
-                        "chunk_index": meta.get("chunk_index", 0),
-                        "distance": distance,
-                    })
+                    passages.append(
+                        {
+                            "text": doc,
+                            "source": meta.get("source", "Unknown"),
+                            "page": meta.get("page", 0),
+                            "chunk_index": meta.get("chunk_index", 0),
+                            "distance": distance,
+                        }
+                    )
 
             logger.info(
-                f"Retrieved {len(passages)} passages for query: "
-                f"{query[:50]}..."
+                f"Retrieved {len(passages)} passages for query: {query[:50]}..."
             )
             return passages
 
@@ -132,16 +129,14 @@ class BookRetriever:
             logger.error(f"Retrieval error: {e}")
             return []
 
-    def format_passages_for_prompt(
-        self, passages: list[dict]
-    ) -> str:
+    def format_passages_for_prompt(self, passages: list[dict]) -> str:
         """Format retrieved passages into a string for the LLM prompt."""
         if not passages:
             return "No reference material available."
 
         formatted = []
         for i, p in enumerate(passages, start=1):
-            source_info = f'{p["source"]}'
+            source_info = f"{p['source']}"
             if p.get("page"):
                 source_info += f", p. {p['page']}"
 

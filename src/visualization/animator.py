@@ -1,5 +1,3 @@
-
-
 CSS_KEYFRAMES = """
 <style>
 @keyframes thrust-right {
@@ -88,67 +86,74 @@ ACTION_ANIMATIONS = {
         "emoji": "🗡️",
         "your_animation": "fencer-left",
         "opp_animation": "fencer-right",
-        "name": "Direct Attack"
+        "name": "Direct Attack",
     },
     "compound_attack": {
         "emoji": "🔱",
         "your_animation": "fencer-left",
         "opp_animation": "fencer-right",
-        "name": "Compound Attack"
+        "name": "Compound Attack",
     },
     "fleche": {
         "emoji": "🏃",
         "your_animation": "fleche-run",
         "opp_animation": "parry-deflect",
-        "name": "Fleche"
+        "name": "Fleche",
     },
     "parry_and_riposte": {
         "emoji": "🛡️",
         "your_animation": "parry-deflect",
         "opp_animation": "fencer-left",
-        "name": "Parry & Riposte"
+        "name": "Parry & Riposte",
     },
     "counter_attack": {
         "emoji": "⚡",
         "your_animation": "counter-quick",
         "opp_animation": "counter-quick",
-        "name": "Counter-Attack"
+        "name": "Counter-Attack",
     },
     "remise": {
         "emoji": "↩️",
         "your_animation": "remise-push",
         "opp_animation": "fencer-left",
-        "name": "Remise"
+        "name": "Remise",
     },
     "prise_de_fer": {
         "emoji": "✋",
         "your_animation": "prise-grab",
         "opp_animation": "prise-grab",
-        "name": "Prise de Fer"
-    }
+        "name": "Prise de Fer",
+    },
 }
 
 
 def get_action_animation(action_type: str) -> dict:
-    return ACTION_ANIMATIONS.get(action_type, {
-        "emoji": "⚔️",
-        "your_animation": "fencer-left",
-        "opp_animation": "fencer-right",
-        "name": "Unknown"
-    })
+    return ACTION_ANIMATIONS.get(
+        action_type,
+        {
+            "emoji": "⚔️",
+            "your_animation": "fencer-left",
+            "opp_animation": "fencer-right",
+            "name": "Unknown",
+        },
+    )
 
 
-def render_animation_sequence(fencer_action: str, opponent_action: str, call_result: str) -> str:
+def render_animation_sequence(
+    fencer_action: str, opponent_action: str, call_result: str
+) -> str:
     fencer_anim = get_action_animation(fencer_action)
     opponent_anim = get_action_animation(opponent_action)
 
     result_colors = {
         "fencer": ("score-flash-green", "✅ YOU SCORED!"),
         "opponent": ("score-flash-red", "❌ OPPONENT SCORED!"),
-        "simultaneous": ("score-flash-yellow", "⭕ SIMULTANEOUS")
+        "simultaneous": ("score-flash-yellow", "⭕ SIMULTANEOUS"),
     }
 
-    flash_class, result_text = result_colors.get(call_result, ("score-flash-yellow", "❓"))
+    flash_class, result_text = result_colors.get(
+        call_result, ("score-flash-yellow", "❓")
+    )
 
     html = f"""
     {CSS_KEYFRAMES}
@@ -166,10 +171,10 @@ def render_animation_sequence(fencer_action: str, opponent_action: str, call_res
         </div>
         <div style="background: linear-gradient(135deg, #1a1a2e, #2d2d4a); padding: 20px; border-radius: 15px; border: 2px solid #3B82F6;">
             <div style="font-size: 60px; margin-bottom: 10px;">
-                {fencer_anim['emoji']} ⚔️ {opponent_anim['emoji']}
+                {fencer_anim["emoji"]} ⚔️ {opponent_anim["emoji"]}
             </div>
             <div style="color: #ccc; font-size: 16px;">
-                {fencer_anim['name']} vs {opponent_anim['name']}
+                {fencer_anim["name"]} vs {opponent_anim["name"]}
             </div>
         </div>
         <div class="{flash_class}" style="margin-top: 20px; padding: 15px 30px; border-radius: 10px; font-size: 24px; font-weight: bold; color: white;">
@@ -214,15 +219,15 @@ def render_action_animation(your_action: str, opp_action: str) -> str:
         </div>
         <div style="display: flex; justify-content: center; gap: 40px; font-size: 50px;">
             <div style="animation: pulse-glow 0.5s infinite;">
-                {your_anim['emoji']}
+                {your_anim["emoji"]}
             </div>
             <div style="color: #666;">vs</div>
             <div style="animation: pulse-glow 0.5s infinite;">
-                {opp_anim['emoji']}
+                {opp_anim["emoji"]}
             </div>
         </div>
         <div style="color: #888; font-size: 14px; margin-top: 15px;">
-            {your_anim['name']} ⚔️ {opp_anim['name']}
+            {your_anim["name"]} ⚔️ {opp_anim["name"]}
         </div>
     </div>
     """
@@ -233,18 +238,18 @@ def render_result_animation(call_result: str, your_score: int, opp_score: int) -
         "fencer": {
             "emoji": "✅",
             "class": "score-flash-green",
-            "text": f"YOU SCORED! {your_score}-{opp_score}"
+            "text": f"YOU SCORED! {your_score}-{opp_score}",
         },
         "opponent": {
             "emoji": "❌",
             "class": "score-flash-red",
-            "text": f"OPPONENT SCORED! {your_score}-{opp_score}"
+            "text": f"OPPONENT SCORED! {your_score}-{opp_score}",
         },
         "simultaneous": {
             "emoji": "⭕",
             "class": "score-flash-yellow",
-            "text": f"SIMULTANEOUS! {your_score}-{opp_score}"
-        }
+            "text": f"SIMULTANEOUS! {your_score}-{opp_score}",
+        },
     }
 
     result = result_data.get(call_result, result_data["simultaneous"])
@@ -253,22 +258,30 @@ def render_result_animation(call_result: str, your_score: int, opp_score: int) -
     {CSS_KEYFRAMES}
     <div style="text-align: center; padding: 30px;">
         <div style="font-size: 80px; animation: bounce 0.5s ease-in-out; margin-bottom: 15px;">
-            {result['emoji']}
+            {result["emoji"]}
         </div>
-        <div class="{result['class']}" style="padding: 20px 40px; border-radius: 15px; font-size: 28px; font-weight: bold; color: white;">
-            {result['text']}
+        <div class="{result["class"]}" style="padding: 20px 40px; border-radius: 15px; font-size: 28px; font-weight: bold; color: white;">
+            {result["text"]}
         </div>
     </div>
     """
 
 
-def render_complete_animation(fencer_action: str, opponent_action: str, call_result: str, your_score: int, opp_score: int) -> str:
+def render_complete_animation(
+    fencer_action: str,
+    opponent_action: str,
+    call_result: str,
+    your_score: int,
+    opp_score: int,
+) -> str:
     result_data = {
         "fencer": ("#10B981", "✅", "YOU SCORED!"),
         "opponent": ("#EF4444", "❌", "OPPONENT SCORED!"),
         "simultaneous": ("#FBBF24", "⭕", "SIMULTANEOUS"),
     }
-    color, emoji, label = result_data.get(call_result, ("#FBBF24", "⭕", "SIMULTANEOUS"))
+    color, emoji, label = result_data.get(
+        call_result, ("#FBBF24", "⭕", "SIMULTANEOUS")
+    )
 
     return f"""
     {CSS_KEYFRAMES}
@@ -284,10 +297,10 @@ def render_complete_animation(fencer_action: str, opponent_action: str, call_res
         </div>
         <div style="background: linear-gradient(135deg, #1a1a2e, #2d2d4a); padding: 25px; border-radius: 15px; margin-bottom: 15px;">
             <div style="font-size: 40px; margin-bottom: 10px;">
-                {get_action_animation(fencer_action)['emoji']} vs {get_action_animation(opponent_action)['emoji']}
+                {get_action_animation(fencer_action)["emoji"]} vs {get_action_animation(opponent_action)["emoji"]}
             </div>
             <div style="color: #aaa; font-size: 14px;">
-                {get_action_animation(fencer_action)['name']} vs {get_action_animation(opponent_action)['name']}
+                {get_action_animation(fencer_action)["name"]} vs {get_action_animation(opponent_action)["name"]}
             </div>
         </div>
         <div style="background: {color}; padding: 15px 30px; border-radius: 10px; font-size: 24px; font-weight: bold; color: white; animation: pulse-glow 1s ease-in-out infinite;">

@@ -71,14 +71,16 @@ def chunk_text(
         # Try to detect the nearest page marker for metadata
         page_num = _extract_page_number(chunk_text)
 
-        chunks.append({
-            "text": chunk_text,
-            "metadata": {
-                "source": source_name,
-                "chunk_index": chunk_index,
-                "page": page_num,
-            },
-        })
+        chunks.append(
+            {
+                "text": chunk_text,
+                "metadata": {
+                    "source": source_name,
+                    "chunk_index": chunk_index,
+                    "page": page_num,
+                },
+            }
+        )
 
         chunk_index += 1
         start = end - overlap  # slide window with overlap
@@ -137,7 +139,9 @@ def ingest_books(
     )
 
     if not files_to_ingest:
-        logger.warning(f"No PDF or TXT files found in {books_dir}. Initializing knowledge base with fallback rules.")
+        logger.warning(
+            f"No PDF or TXT files found in {books_dir}. Initializing knowledge base with fallback rules."
+        )
         _ingest_rules_fallback(collection)
         return collection
 
@@ -147,14 +151,12 @@ def ingest_books(
     existing_sources = set()
     if collection.count() > 0:
         existing_meta = collection.get(include=["metadatas"])
-        existing_sources = {
-            m.get("source", "") for m in existing_meta["metadatas"]
-        }
+        existing_sources = {m.get("source", "") for m in existing_meta["metadatas"]}
         logger.info(f"Already ingested sources: {existing_sources}")
 
     for file_path in files_to_ingest:
         source_name = file_path.name
-        
+
         # If ingesting a TXT file, check if either the TXT or original PDF source is already present
         pdf_source = file_path.with_suffix(".pdf").name
         if source_name in existing_sources or pdf_source in existing_sources:
@@ -162,14 +164,14 @@ def ingest_books(
             continue
 
         logger.info(f"Ingesting: {source_name}")
-        
+
         # Load text
         if file_path.suffix == ".txt":
             with open(file_path, "r", encoding="utf-8") as f:
                 text = f.read()
         else:
             text = extract_text_from_pdf(file_path)
-            
+
         chunks = chunk_text(text, source_name)
 
         if not chunks:
@@ -193,7 +195,9 @@ def ingest_books(
         logger.info(f"Ingested {len(chunks)} chunks from {source_name}")
 
     if collection.count() == 0:
-        logger.warning("No PDF chunks were ingested (PDFs may be scanned or empty). Falling back to rules ingestion.")
+        logger.warning(
+            "No PDF chunks were ingested (PDFs may be scanned or empty). Falling back to rules ingestion."
+        )
         _ingest_rules_fallback(collection)
 
     logger.info(f"Total documents in collection: {collection.count()}")
@@ -203,6 +207,7 @@ def ingest_books(
 def _ingest_rules_fallback(collection) -> int:
     """Ingest rules from fencing_rules.json as a fallback when PDFs are scanned or empty."""
     from src.utils.config import get_rules
+
     try:
         rules = get_rules()
         documents = []
@@ -245,16 +250,18 @@ def _ingest_rules_fallback(collection) -> int:
                 if note:
                     action_text += f" Note: {note}"
                 documents.append(action_text)
-                metadatas.append({"source": "fencing_rules.json", "chunk_index": chunk_idx, "page": 1})
+                metadatas.append(
+                    {
+                        "source": "fencing_rules.json",
+                        "chunk_index": chunk_idx,
+                        "page": 1,
+                    }
+                )
                 ids.append(f"rules_fallback_action_{action_key}")
                 chunk_idx += 1
 
         # Add to collection
-        collection.add(
-            ids=ids,
-            documents=documents,
-            metadatas=metadatas
-        )
+        collection.add(ids=ids, documents=documents, metadatas=metadatas)
         logger.info(f"Ingested {len(ids)} fallback rule chunks into ChromaDB.")
         return len(ids)
     except (chromadb.errors.ChromaError, OSError, ValueError) as e:
@@ -272,7 +279,7 @@ def get_ingestion_status(
 
     pdf_files = {f.stem: f.name for f in books_dir.glob("*.pdf")}
     txt_files = {f.stem: f.name for f in books_dir.glob("*.txt")}
-    
+
     # Combined set of stems
     all_stems = sorted(set(pdf_files.keys()) | set(txt_files.keys()))
     pdf_names = [pdf_files.get(stem, f"{stem}.pdf") for stem in all_stems]
@@ -293,9 +300,7 @@ def get_ingestion_status(
             total_chunks = collection.count()
             if total_chunks > 0:
                 meta = collection.get(include=["metadatas"])
-                ingested_sources = {
-                    m.get("source", "") for m in meta["metadatas"]
-                }
+                ingested_sources = {m.get("source", "") for m in meta["metadatas"]}
         except (chromadb.errors.ChromaError, OSError, ValueError) as e:
             logger.error(f"Error checking ingestion status: {e}")
 

@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import streamlit as st
 
@@ -7,15 +6,19 @@ class HistoryPanel:
     def __init__(self):
         self.exchanges = []
 
-    def add_exchange(self, exchange_num: int, fencer_action: str, opponent_action: str, result: dict):
-        self.exchanges.append({
-            "exchange": exchange_num,
-            "your_action": fencer_action.replace("_", " ").title(),
-            "opponent_action": opponent_action.replace("_", " ").title(),
-            "call": result.get("call", "unknown"),
-            "you_scored": result.get("fencer_score", 0),
-            "opp_scored": result.get("opponent_score", 0)
-        })
+    def add_exchange(
+        self, exchange_num: int, fencer_action: str, opponent_action: str, result: dict
+    ):
+        self.exchanges.append(
+            {
+                "exchange": exchange_num,
+                "your_action": fencer_action.replace("_", " ").title(),
+                "opponent_action": opponent_action.replace("_", " ").title(),
+                "call": result.get("call", "unknown"),
+                "you_scored": result.get("fencer_score", 0),
+                "opp_scored": result.get("opponent_score", 0),
+            }
+        )
 
     def get_timeline(self) -> list[dict]:
         return self.exchanges
@@ -47,16 +50,22 @@ class HistoryPanel:
 
                 with col1:
                     st.markdown(f"**🔵 You:** {ex['your_action']}")
-                    if ex['you_scored']:
+                    if ex["you_scored"]:
                         st.success("✓ Scored!")
 
                 with col2:
-                    call_emoji = "✅" if ex['call'] == 'fencer' else "❌" if ex['call'] == 'opponent' else "⭕"
+                    call_emoji = (
+                        "✅"
+                        if ex["call"] == "fencer"
+                        else "❌"
+                        if ex["call"] == "opponent"
+                        else "⭕"
+                    )
                     st.markdown(f"**Call:** {call_emoji} {ex['call'].title()}")
 
                 with col3:
                     st.markdown(f"**🔴 Opp:** {ex['opponent_action']}")
-                    if ex['opp_scored']:
+                    if ex["opp_scored"]:
                         st.error("✗ Scored!")
 
     def render_score_chart(self):
@@ -72,12 +81,21 @@ class HistoryPanel:
 
         exchanges = list(range(1, len(score_data["you"]) + 1))
 
-        ax.plot(exchanges, score_data["you"], 'b-o', label='You', linewidth=2, markersize=8)
-        ax.plot(exchanges, score_data["opponent"], 'r-s', label='Opponent', linewidth=2, markersize=8)
+        ax.plot(
+            exchanges, score_data["you"], "b-o", label="You", linewidth=2, markersize=8
+        )
+        ax.plot(
+            exchanges,
+            score_data["opponent"],
+            "r-s",
+            label="Opponent",
+            linewidth=2,
+            markersize=8,
+        )
 
-        ax.set_xlabel('Exchange Number')
-        ax.set_ylabel('Score')
-        ax.set_title('Score Progression')
+        ax.set_xlabel("Exchange Number")
+        ax.set_ylabel("Score")
+        ax.set_title("Score Progression")
         ax.legend()
         ax.grid(True, alpha=0.3)
 
@@ -118,7 +136,7 @@ def render_history_panel(exchange_results: list[dict]):
             result.get("exchange_number", 0),
             result.get("fencer_action", {}).get("type", ""),
             result.get("opponent_action", {}).get("type", ""),
-            result.get("referee_call", {})
+            result.get("referee_call", {}),
         )
 
     col1, col2 = st.columns([2, 1])
