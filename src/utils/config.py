@@ -10,11 +10,14 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 RULES_FILE = CONFIG_DIR / "fencing_rules.json"
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/thinkingmachines/inkling:free")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/minimax/minimax-m3:free")
 
-# Curated OpenRouter free models for the sidebar dropdown
+# Curated OpenRouter free models for the sidebar dropdown.
+# Note: free-model availability churns weekly on OpenRouter, and some free
+# models (e.g. thinkingmachines/inkling:free) are restricted to agentic
+# harnesses — pick a model that returned HTTP 200 when tested directly.
 OPENROUTER_MODELS = [
-    "openrouter/thinkingmachines/inkling:free",
+    "openrouter/minimax/minimax-m3:free",
 ]
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 WINNING_SCORE = int(os.getenv("WINNING_SCORE", "5"))

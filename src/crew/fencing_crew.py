@@ -105,6 +105,8 @@ class FencingCrew:
             f"User: {user_message}"
         )
 
+        action = "direct_attack"
+        target = "torso"
         try:
             import litellm
 
@@ -115,13 +117,22 @@ class FencingCrew:
                 max_tokens=50,
             )
             content = response.choices[0].message.content.strip()
+            # Strip any ```json ... ``` fence the model may add
             if content.startswith("```"):
-                content = content.split("```")[1]
-                content = content.removeprefix("json")
+                parts = content.split("```")
+                # parts = ['', 'json\n{...}\n', '']
+                content = parts[1] if len(parts) >= 2 else content
+                content = content.removeprefix("json").strip()
             result = json.loads(content)
             action = result.get("action", "direct_attack")
             target = result.get("target", "torso")
-        except (json.JSONDecodeError, KeyError, ValueError, ConnectionError, TypeError):
+        except Exception as e:
+            # LLM call or JSON parsing failed — fall back to defaults
+            # (free models are unreliable, so this is common).
+            logger.warning(
+                f"interpret_user_intent: falling back to default move "
+                f"({type(e).__name__}: {e})"
+            )
             action = "direct_attack"
             target = "torso"
 

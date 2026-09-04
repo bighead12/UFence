@@ -22,10 +22,16 @@ from src.visualization.history import render_history_panel
 # Helper functions for exchange execution
 # ------------------------------------------------------------------
 def _execute_move(crew: FencingCrew, action: str, target: str) -> None:
-    """Execute a fencing move with the given action and target."""
-    if st.session_state.get("_processing_message"):
-        return
-    st.session_state._processing_message = True
+    """Execute a fencing move with the given action and target.
+
+    Caller is responsible for setting the ``_processing_message`` guard if
+    the move is part of a larger user-driven flow (see
+    ``_execute_natural_language_move``).
+    """
+    # NOTE: do NOT re-check _processing_message here. Callers (button handler
+    # and natural-language handler) are responsible for setting the guard
+    # before calling. A previous version of this guard short-circuited the
+    # natural-language path because the parent had already set the flag.
 
     try:
         result = crew.execute_exchange(action, target)
@@ -111,8 +117,8 @@ def _execute_natural_language_move(crew: FencingCrew, prompt: str) -> None:
             action, target = crew.interpret_user_intent(prompt)
             _execute_move(crew, action, target)
 
-    except (ValueError, RuntimeError) as e:
-        st.error(f"Error: {e}")
+    except Exception as e:
+        st.error(f"Error interpreting move: {e}")
         with st.expander("Debug"):
             st.code(traceback.format_exc())
     finally:
